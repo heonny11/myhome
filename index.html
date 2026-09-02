@@ -1,4 +1,3 @@
-HTML
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -235,7 +234,8 @@ HTML
     </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzr_pTIylKx8ZRLw4FAqLJi2D8dtKf-zb2pCXuxg2OQGwC5_pM6GXizM7JM0CTcW9E/exec";
+    // 
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwSby30y1NWP-unHAoAr3_CTM-fFKpbmDxAng_bSNjTgr4yfThwCaWRe5p4MiqoUuUf/exec";
     const FAMILY_PASSWORD = "140114";
 
     let selectedPayer = "남편";
@@ -293,19 +293,25 @@ HTML
         btn.innerText = '저장 중...';
         btn.disabled = true;
 
-        // CORS 우회를 위해 URL 파라미터(GET 방식)로 데이터를 전송하도록 변경
-        const url = `${SCRIPT_URL}?date=${encodeURIComponent(date)}&payer=${encodeURIComponent(selectedPayer)}&category=${encodeURIComponent(selectedCategory)}&amount=${encodeURIComponent(amount)}&memo=${encodeURIComponent(memo)}`;
+        const payload = { 
+            date: date, 
+            payer: selectedPayer, 
+            category: selectedCategory, 
+            amount: amount, 
+            memo: memo 
+        };
 
-        fetch(url, { method: 'GET', mode: 'no-cors' })
-        .then(() => {
-            // no-cors 모드에서는 응답을 읽을 수 없으므로 잠시 대기 후 새로고침 및 데이터 로드
-            setTimeout(() => {
-                document.getElementById('amountInput').value = '';
-                document.getElementById('memoInput').value = '';
-                btn.innerText = '지출 저장하기';
-                btn.disabled = false;
-                loadData();
-            }, 1000);
+        fetch(SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        })
+        .then(response => response.json())
+        .then(result => {
+            document.getElementById('amountInput').value = '';
+            document.getElementById('memoInput').value = '';
+            btn.innerText = '지출 저장하기';
+            btn.disabled = false;
+            loadData();
         })
         .catch(error => {
             console.error('Error:', error);
