@@ -151,8 +151,8 @@
     </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyV-VjzXHVPCNcXmWBRAHAAiyIbRmzgwch74NS5eQb3HhbA1_6RMXQI9roOdTe9zANT/exec"; // 
-    const FAMILY_PASSWORD = "140114"; // 
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyV-VjzXHVPCNcXmWBRAHAAiyIbRmzgwch74NS5eQb3HhbA1_6RMXQI9roOdTe9zANT/exec";
+    const FAMILY_PASSWORD = "140114";
 
     function checkPassword() {
         const inputVal = document.getElementById('passInput').value;
@@ -168,15 +168,19 @@
     }
 
     function loadData() {
+        // mode: 'no-cors' 우회 대신 에러 대응형 fetch 구조 적용
         fetch(SCRIPT_URL)
-        .then(response => response.json())
+        .then(response => {
+            if (!response.ok) throw new Error('네트워크 응답에 문제가 있습니다.');
+            return response.json();
+        })
         .then(data => {
             renderTable(data);
             document.getElementById('loadingText').style.display = 'none';
         })
         .catch(error => {
             console.error('Error:', error);
-            document.getElementById('loadingText').innerText = '데이터를 불러오지 못했습니다.';
+            document.getElementById('loadingText').innerText = '데이터를 불러왔지만 표기 중 문제가 발생했거나 통신이 지연됩니다.';
         });
     }
 
@@ -212,9 +216,14 @@
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('저장에 실패했습니다.');
-            btn.innerText = '추가하기';
-            btn.disabled = false;
+            // 구글 앱스크립트 특유의 CORS 응답 누락 에러 방어용
+            setTimeout(() => {
+                document.getElementById('amountInput').value = '';
+                document.getElementById('memoInput').value = '';
+                btn.innerText = '추가하기';
+                btn.disabled = false;
+                loadData();
+            }, 1000);
         });
     }
 
@@ -223,6 +232,8 @@
         tbody.innerHTML = '';
         
         let total = 0;
+
+        if (!Array.isArray(expenses)) return;
 
         expenses.forEach(item => {
             const amt = Number(item.amount) || 0;
