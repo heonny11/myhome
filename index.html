@@ -117,7 +117,7 @@
                     <div class="chip" onclick="selectCategory(this, '교통/차량')">교통/차량</div>
                     <div class="chip" onclick="selectCategory(this, '주거/통신')">주거/통신</div>
                     <div class="chip" onclick="selectCategory(this, '의료/건강')">의료/건강</div>
-                    <div class="chip" onclick="selectCategory(this, '쇼핑/의류')</i>쇼핑/의류</div>
+                    <div class="chip" onclick="selectCategory(this, '쇼핑/의류')">쇼핑/의류</div>
                     <div class="chip" onclick="selectCategory(this, '문화/여가')">문화/여가</div>
                     <div class="chip" onclick="selectCategory(this, '기타')">기타</div>
                 </div>
@@ -185,16 +185,19 @@
         }
     }
 
-    // CORS 제약을 완벽히 우회하여 구글 시트 데이터를 받아오는 함수 (JSONP 방식)
+    // CORS 제약을 아예 받지 않는 JSONP 방식 (스크립트 태그 삽입)
     function loadData() {
-        // 전역 콜백 함수 등록
-        window.callback =function(data) {
+        window.myCallback = function(data) {
             renderTable(data);
             document.getElementById('loadingText').style.display = 'none';
         };
 
+        const oldScript = document.getElementById('jsonpScript');
+        if (oldScript) oldScript.remove();
+
         const script = document.createElement('script');
-        script.src = `${SCRIPT_URL}?callback=callback`;
+        script.id = 'jsonpScript';
+        script.src = `${SCRIPT_URL}?callback=myCallback`;
         script.onerror = () => {
             document.getElementById('loadingText').innerText = '데이터를 불러오지 못했습니다.';
         };
@@ -229,7 +232,7 @@
             btn.innerText = '지출 저장하기';
             btn.disabled = false;
             alert('저장되었습니다!');
-            loadData(); // 데이터 다시 불러오기
+            loadData();
         }, 1200);
     }
 
@@ -265,3 +268,6 @@
         document.getElementById('wifeSpent').innerText = `${wifeTotal.toLocaleString()}원`;
     }
 </script>
+
+</body>
+</html>
