@@ -3,90 +3,282 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>우리가족 실시간 공유 가계부</title>
+    <title>우리집 가계부</title>
     <style>
         body {
             font-family: 'Apple SD Gothic Neo', sans-serif;
-            background-color: #f4f6f9;
+            background-color: #f7f6f2;
             margin: 0;
             padding: 20px;
-            color: #333;
+            color: #2c3e50;
         }
         .container {
-            max-width: 500px;
+            max-width: 600px;
             margin: 0 auto;
-            background: #ffffff;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
         }
-        h2 { text-align: center; color: #2c3e50; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 14px; }
-        input, select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            box-sizing: border-box;
-            font-size: 14px;
-        }
-        button {
-            width: 100%;
-            background-color: #4CAF50;
-            color: white;
-            padding: 12px;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        button:hover { background-color: #45a049; }
-        .total-box {
-            margin-top: 20px;
-            padding: 15px;
-            background-color: #e8f5e9;
-            border-radius: 6px;
-            text-align: center;
-            font-size: 18px;
-            font-weight: bold;
-            color: #2e7d32;
-        }
-        table {
-            width: 100%;
-            margin-top: 20px;
-            border-collapse: collapse;
-        }
-        th, td {
-            border-bottom: 1px solid #eee;
-            padding: 8px;
-            text-align: center;
-            font-size: 12px;
-        }
-        th { background-color: #f8f9fa; }
-        .loading { text-align: center; color: #888; font-size: 13px; margin-top: 10px; }
-        
+        /* 잠금 화면 스타일 */
         #lockScreen {
             max-width: 400px;
             margin: 100px auto;
             background: #ffffff;
             padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
             text-align: center;
         }
         #lockScreen input {
+            width: 100%;
+            padding: 12px;
             margin-top: 15px;
             margin-bottom: 15px;
             text-align: center;
             font-size: 18px;
-            letter-spacing: 2px;
+            letter-spacing: 3px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+        #lockScreen button {
+            width: 100%;
+            background-color: #4a6b5b;
+            color: white;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* 메인 상단 헤더 */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .header h1 {
+            font-size: 22px;
+            color: #2f4f4f;
+            margin: 0;
+        }
+        .sync-info {
+            font-size: 11px;
+            color: #888;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .sync-info button {
+            padding: 2px 6px;
+            font-size: 11px;
+            background: #fff;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        /* 주간 요약 카드 */
+        .summary-card {
+            background-color: #2f4f4f;
+            color: white;
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(47,79,79,0.15);
+        }
+        .summary-card .title {
+            font-size: 13px;
+            color: #d1deda;
+            margin-bottom: 5px;
+        }
+        .summary-card .amount {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .progress-bar {
+            background-color: rgba(255,255,255,0.2);
+            height: 8px;
+            border-radius: 4px;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            background-color: #a3c1ad;
+            height: 100%;
+            width: 0%;
+        }
+        .sub-stats {
+            font-size: 12px;
+            color: #d1deda;
+            display: flex;
+            gap: 15px;
+        }
+
+        /* 주간 네비게이터 */
+        .nav-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #ffffff;
+            padding: 10px 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+            font-weight: bold;
+        }
+        .nav-bar button {
+            background: none;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+
+        /* 날짜별 아코디언/리스트 아이템 */
+        .day-card {
+            background: #ffffff;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        .day-card.today {
+            border: 2px solid #2f4f4f;
+        }
+        .day-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .day-date {
+            font-size: 15px;
+            font-weight: bold;
+        }
+        .today-badge {
+            background: #2f4f4f;
+            color: white;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .day-total {
+            font-weight: bold;
+            color: #555;
+        }
+
+        /* 모달 (입력창) */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4);
+            justify-content: center;
+            align-items: flex-end;
+            z-index: 100;
+        }
+        .modal-content {
+            background: #fdfcf7;
+            width: 100%;
+            max-width: 600px;
+            padding: 25px;
+            border-radius: 20px 20px 0 0;
+            box-sizing: border-box;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .close-btn { background: none; border: none; font-size: 14px; cursor: pointer; color: #888; }
+
+        .form-section {
+            margin-bottom: 20px;
+        }
+        .form-section label {
+            display: block;
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #555;
+        }
+        /* 칩 버튼 스타일 */
+        .chip-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .chip {
+            padding: 8px 14px;
+            background: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .chip.selected {
+            background: #2f4f4f;
+            color: white;
+            border-color: #2f4f4f;
+            font-weight: bold;
+        }
+        .amount-input-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .amount-input-box input {
+            width: 100%;
+            padding: 12px 40px 12px 15px;
+            font-size: 18px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-sizing: border-box;
+            background: #fff;
+        }
+        .amount-input-box span {
+            position: absolute;
+            right: 15px;
+            font-weight: bold;
+            color: #888;
+        }
+        .memo-input {
+            width: 100%;
+            padding: 12px 15px;
+            font-size: 14px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            box-sizing: border-box;
+            background: #fff;
+        }
+        .save-btn {
+            width: 100%;
+            background-color: #4a6b5b;
+            color: white;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
 
+    <!-- 잠금 화면 -->
     <div id="lockScreen">
         <h2>🔒 우리가족 가계부</h2>
         <p style="font-size: 14px; color: #666;">가족 비밀번호를 입력해주세요.</p>
@@ -94,72 +286,104 @@
         <button onclick="checkPassword()">입장하기</button>
     </div>
 
+    <!-- 메인 앱 화면 -->
     <div class="container" id="mainApp" style="display: none;">
-        <h2>👨‍👩‍👧‍👦 우리가족 실시간 가계부</h2>
-        
-        <div class="form-group">
-            <label>날짜</label>
-            <input type="date" id="dateInput">
-        </div>
-        <div class="form-group">
-            <label>결제자</label>
-            <select id="payerInput">
-                <option value="남편">남편</option>
-                <option value="아내">아내</option>
-                <option value="공용">공용</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>카테고리</label>
-            <select id="categoryInput">
-                <option value="식비/외식">식비/외식</option>
-                <option value="마트/생활">마트/생활</option>
-                <option value="의료/건강">의료/건강</option>
-                <option value="쇼핑/외류">쇼핑/외류</option>
-                <option value="기타">기타</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label>금액 (원)</label>
-            <input type="number" id="amountInput" placeholder="금액을 입력하세요">
-        </div>
-        <div class="form-group">
-            <label>메모</label>
-            <input type="text" id="memoInput" placeholder="어디서 썼나요?">
-        </div>
-        
-        <button onclick="addExpense()" id="submitBtn">추가하기</button>
-        <div class="loading" id="loadingText">데이터를 불러오는 중...</div>
-
-        <div class="total-box" id="totalDisplay">
-            총 지출: 0 원
+        <div class="header">
+            <h1>우리집 가계부</h1>
+            <div class="sync-info">
+                <span id="syncStatus">마지막 동기화 방금 전</span>
+                <button onclick="loadData()">새로고침</button>
+            </div>
         </div>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>날짜</th>
-                    <th>결제자</th>
-                    <th>카테고리</th>
-                    <th>금액</th>
-                    <th>메모</th>
-                </tr>
-            </thead>
-            <tbody id="expenseTableBody">
-            </tbody>
-        </table>
+        <div class="summary-card">
+            <div class="title">이번 주 지출</div>
+            <div class="amount" id="weeklyTotal">0원</div>
+            <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+            <div class="sub-stats" id="subStatsText">
+                <span>카드 0% 0원</span>
+                <span>체크 0% 0원</span>
+                <span>현금 0% 0원</span>
+            </div>
+        </div>
+
+        <div class="nav-bar">
+            <button onclick="changeWeek(-1)">◀</button>
+            <span id="weekRangeTitle">이번 주</span>
+            <button onclick="changeWeek(1)">▶</button>
+        </div>
+
+        <div id="daysListContainer">
+            <!-- 동적으로 생성되는 날짜별 리스트 -->
+        </div>
+    </div>
+
+    <!-- 지출 입력 모달 -->
+    <div class="modal" id="expenseModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span id="modalDateTitle">9월 2일 (수)</span>
+                <button class="close-btn" onclick="closeModal()">닫기</button>
+            </div>
+
+            <div class="form-section">
+                <label>결제 수단</label>
+                <div class="chip-group" id="paymentChips">
+                    <div class="chip selected" onclick="selectChip('payment', '카카오뱅크')">카카오뱅크</div>
+                    <div class="chip" onclick="selectChip('payment', '토스 K-패스')">토스 K-패스</div>
+                    <div class="chip" onclick="selectChip('payment', '신한은행')">신한은행</div>
+                    <div class="chip" onclick="selectChip('payment', '현금')">현금</div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <label>카테고리</label>
+                <div class="chip-group" id="categoryChips">
+                    <div class="chip selected" onclick="selectChip('category', '식비/외식')">식비/외식</div>
+                    <div class="chip" onclick="selectChip('category', '마트/생활')">마트/생활</div>
+                    <div class="chip" onclick="selectChip('category', '교통/차량')">교통/차량</div>
+                    <div class="chip" onclick="selectChip('category', '주거/통신')">주거/통신</div>
+                    <div class="chip" onclick="selectChip('category', '의료/건강')">의료/건강</div>
+                    <div class="chip" onclick="selectChip('category', '육아')">육아</div>
+                    <div class="chip" onclick="selectChip('category', '쇼핑/의류')">쇼핑/의류</div>
+                    <div class="chip" onclick="selectChip('category', '문화/여가')">문화/여가</div>
+                    <div class="chip" onclick="selectChip('category', '경조사/모임')">경조사/모임</div>
+                    <div class="chip" onclick="selectChip('category', '기타')">기타</div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <label>금액</label>
+                <div class="amount-input-box">
+                    <input type="number" id="amountInput" placeholder="0">
+                    <span>원</span>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <label>메모 (선택)</label>
+                <input type="text" id="memoInput" class="memo-input" placeholder="예: 주말 장보기">
+            </div>
+
+            <button class="save-btn" onclick="addExpense()" id="submitBtn">저장</button>
+        </div>
     </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxpoahVhS6pph8cQNOhC3cgxVJyPeF1ZetSObAGspGbMijsuOsYqewm0ojmIPUPFd4U/exec"; // 
-    const FAMILY_PASSWORD = "140114"; // 
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyV-VjzXHVPCNcXmWBRAHAAiyIbRmzgwch74NS5eQb3HhbA1_6RMXQI9roOdTe9zANT/exec";
+    const FAMILY_PASSWORD = "140114";
+
+    let allData = [];
+    let selectedDateStr = "";
+    let selectedPayment = "카카오뱅크";
+    let selectedCategory = "식비/외식";
 
     function checkPassword() {
         const inputVal = document.getElementById('passInput').value;
         if(inputVal === FAMILY_PASSWORD) {
             document.getElementById('lockScreen').style.display = 'none';
             document.getElementById('mainApp').style.display = 'block';
-            document.getElementById('dateInput').valueAsDate = new Date();
+            initWeekView();
             loadData();
         } else {
             alert('비밀번호가 틀렸습니다!');
@@ -171,19 +395,108 @@
         fetch(SCRIPT_URL)
         .then(response => response.json())
         .then(data => {
-            renderTable(data);
-            document.getElementById('loadingText').style.display = 'none';
+            allData = data;
+            renderDaysList();
+            document.getElementById('syncStatus').innerText = "마지막 동기화 방금 전";
         })
         .catch(error => {
             console.error('Error:', error);
-            document.getElementById('loadingText').innerText = '데이터를 불러오지 못했습니다.';
+            document.getElementById('syncStatus').innerText = "동기화 실패";
         });
     }
 
+    // 주간 뷰 기본 생성 (오늘 기준 이번 주 월~일)
+    let currentWeekOffset = 0;
+    function initWeekView() {
+        renderDaysList();
+    }
+
+    function changeWeek(direction) {
+        currentWeekOffset += direction;
+        renderDaysList();
+    }
+
+    function renderDaysList() {
+        const container = document.getElementById('daysListContainer');
+        container.innerHTML = '';
+
+        // 기준 날짜 계산
+        let curr = new Date();
+        curr.setDate(curr.getDate() + (currentWeekOffset * 7));
+        
+        let dayOfWeek = curr.getDay();
+        let monday = new Date(curr);
+        monday.setDate(curr.getDate() - (dayOfWeek === 0 ? 6 : dayOfWeek - 1));
+
+        let weekTotal = 0;
+        let daysHtml = '';
+
+        for (let i = 0; i < 7; i++) {
+            let d = new Date(monday);
+            d.setDate(monday.getDate() + i);
+            let dateString = d.toISOString().split('T')[0];
+            
+            let dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+            let dayName = dayNames[d.getDay()];
+            
+            let isToday = new Date().toISOString().split('T')[0] === dateString;
+
+            // 해당 날짜 지출 계산
+            let daySum = 0;
+            allData.forEach(item => {
+                if(item.date && item.date.toString().substring(0, 10) === dateString) {
+                    daySum += Number(item.amount) || 0;
+                }
+            });
+            weekTotal += daySum;
+
+            daysHtml += `
+                <div class="day-card ${isToday ? 'today' : ''}" onclick="openModal('${dateString}', '${d.getMonth()+1}월 ${d.getDate}일 (${dayName})')">
+                    <div class="day-info">
+                        <span class="day-date">${d.getDate()} (${dayName})</span>
+                        ${isToday ? '<span class="today-badge">오늘</span>' : ''}
+                    </div>
+                    <div class="day-total">${daySum.toLocaleString()}원 +</div>
+                </div>
+            `;
+        }
+
+        container.innerHTML = daysHtml;
+        document.getElementById('weeklyTotal').innerText = weekTotal.toLocaleString() + '원';
+        
+        // 주간 상단 타이틀 설정
+        let sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6);
+        document.getElementById('weekRangeTitle').innerText = `${monday.getMonth()+1}월 ${monday.getDate()}일 - ${sunday.getMonth()+1}월 ${sunday.getDate()}일`;
+    }
+
+    function openModal(dateStr, titleStr) {
+        selectedDateStr = dateStr;
+        document.getElementById('modalDateTitle').innerText = titleStr;
+        document.getElementById('amountInput').value = '';
+        document.getElementById('memoInput').value = '';
+        document.getElementById('expenseModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('expenseModal').style.display = 'none';
+    }
+
+    function selectChip(type, value) {
+        if(type === 'payment') {
+            selectedPayment = value;
+            document.querySelectorAll('#paymentChips .chip').forEach(el => {
+                el.classList.toggle('selected', el.innerText === value);
+            });
+        } else if(type === 'category') {
+            selectedCategory = value;
+            document.querySelectorAll('#categoryChips .chip').forEach(el => {
+                el.classList.toggle('selected', el.innerText === value);
+            });
+        }
+    }
+
     function addExpense() {
-        const date = document.getElementById('dateInput').value;
-        const payer = document.getElementById('payerInput').value;
-        const category = document.getElementById('categoryInput').value;
         const amount = Number(document.getElementById('amountInput').value);
         const memo = document.getElementById('memoInput').value;
 
@@ -196,7 +509,14 @@
         btn.innerText = '저장 중...';
         btn.disabled = true;
 
-        const payload = { date, payer, category, amount, memo };
+        // 시트 구조: 날짜, 결제자(결제수단으로 대체), 카테고리, 금액, 메모
+        const payload = { 
+            date: selectedDateStr, 
+            payer: selectedPayment, 
+            category: selectedCategory, 
+            amount: amount, 
+            memo: memo 
+        };
 
         fetch(SCRIPT_URL, {
             method: 'POST',
@@ -204,46 +524,17 @@
         })
         .then(response => response.json())
         .then(result => {
-            document.getElementById('amountInput').value = '';
-            document.getElementById('memoInput').value = '';
-            btn.innerText = '추가하기';
+            btn.innerText = '저장';
             btn.disabled = false;
+            closeModal();
             loadData();
         })
         .catch(error => {
             console.error('Error:', error);
             alert('저장에 실패했습니다.');
-            btn.innerText = '추가하기';
+            btn.innerText = '저장';
             btn.disabled = false;
         });
-    }
-
-    function renderTable(expenses) {
-        const tbody = document.getElementById('expenseTableBody');
-        tbody.innerHTML = '';
-        
-        let total = 0;
-
-        expenses.forEach(item => {
-            const amt = Number(item.amount) || 0;
-            total += amt;
-            
-            let dateStr = item.date;
-            if(dateStr) {
-                dateStr = dateStr.toString().substring(0, 10);
-            }
-
-            const row = `<tr>
-                <td>${dateStr}</td>
-                <td>${item.payer || ''}</td>
-                <td>${item.category || ''}</td>
-                <td>${amt.toLocaleString()}원</td>
-                <td>${item.memo || ''}</td>
-            </tr>`;
-            tbody.innerHTML += row;
-        });
-
-        document.getElementById('totalDisplay').innerText = `총 지출: ${total.toLocaleString()} 원`;
     }
 </script>
 
