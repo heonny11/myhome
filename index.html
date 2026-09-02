@@ -117,7 +117,7 @@
                     <div class="chip" onclick="selectCategory(this, '교통/차량')">교통/차량</div>
                     <div class="chip" onclick="selectCategory(this, '주거/통신')">주거/통신</div>
                     <div class="chip" onclick="selectCategory(this, '의료/건강')">의료/건강</div>
-                    <div class="chip" onclick="selectCategory(this, '쇼핑/의류')">쇼핑/의류</div>
+                    <div class="chip" onclick="selectCategory(this, '쇼핑/의류')</i>쇼핑/의류</div>
                     <div class="chip" onclick="selectCategory(this, '문화/여가')">문화/여가</div>
                     <div class="chip" onclick="selectCategory(this, '기타')">기타</div>
                 </div>
@@ -186,15 +186,28 @@
     }
 
     function loadData() {
-        fetch(SCRIPT_URL)
+        // CORS 우회를 위해 노프록시 공공 서비스나 JSONP 형식을 쓰거나 
+        // 혹은 아래처럼 구글 시트 데이터를 가져오는 가장 안전한 우회 fetch를 시도합니다.
+        fetch(SCRIPT_URL, { method: 'GET', mode: 'cors' })
         .then(response => response.json())
         .then(data => {
             renderTable(data);
             document.getElementById('loadingText').style.display = 'none';
         })
         .catch(error => {
-            console.error('Error:', error);
-            document.getElementById('loadingText').innerText = '데이터를 불러오지 못했습니다.';
+            console.warn('Direct fetch failed, trying alternative method...', error);
+            // 만약 브라우저가 막을 경우 JSONP/Proxy 형태로 재시도
+            fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(SCRIPT_URL))
+            .then(res => res.json())
+            .then(data => {
+                const parsed = JSON.parse(data.contents);
+                renderTable(parsed);
+                document.getElementById('loadingText').style.display = 'none';
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                document.getElementById('loadingText').innerText = '데이터를 불러오지 못했습니다.';
+            });
         });
     }
 
