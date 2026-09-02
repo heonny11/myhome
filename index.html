@@ -9,10 +9,10 @@
             --bg-color: #f4f6f0;
             --card-bg: #ffffff;
             --primary-color: #3b5343;
+            --accent-color: #d97736; /* 공용 포인트 색상 */
             --text-main: #2c3e35;
             --text-sub: #7b8b80;
             --border-color: #e2e8df;
-            --danger-color: #d9534f;
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -55,6 +55,13 @@
             border-radius: 20px; font-size: 13px; cursor: pointer; color: var(--text-main);
         }
         .chip.active { background: var(--primary-color); color: white; border-color: var(--primary-color); font-weight: 600; }
+        
+        /* 공용 버튼 전용 특별 색상 스타일 */
+        .chip.common-chip.active {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+
         input[type="date"], input[type="number"], input[type="text"] {
             width: 100%; padding: 12px; border: 1px solid var(--border-color);
             border-radius: 10px; box-sizing: border-box; font-size: 15px; background: white;
@@ -96,8 +103,8 @@
             <div class="asset-title">이번 달 총 지출</div>
             <div class="asset-total" id="totalDisplay">0 원</div>
             <div class="asset-grid">
-                <div>👨 남편 사용현금: <span id="husbandSpent">0원</span></div>
-                <div>👩 아내 사용현금: <span id="wifeSpent">0원</span></div>
+                <div>👨 남편/아내 사용: <span id="husbandSpent">0원</span></div>
+                <div>🛒 공용 지출: <span id="wifeSpent">0원</span></div>
             </div>
         </div>
 
@@ -117,6 +124,7 @@
                 <div class="chip-group" id="payerGroup">
                     <div class="chip active" onclick="selectPayer(this, '남편')">남편</div>
                     <div class="chip" onclick="selectPayer(this, '아내')">아내</div>
+                    <div class="chip common-chip" onclick="selectPayer(this, '공용')">🛒 공용</div>
                 </div>
             </div>
 
@@ -271,17 +279,20 @@
         tbody.innerHTML = '';
         
         let total = 0;
-        let husbandTotal = 0;
-        let wifeTotal = 0;
+        let personalTotal = 0;
+        let commonTotal = 0;
 
         expenses.forEach((item, index) => {
             const amt = Number(item.amount) || 0;
             total += amt;
 
-            if(item.payer === '남편') husbandTotal += amt;
-            else if(item.payer === '아내') wifeTotal += amt;
+            if(item.payer === '공용') {
+                commonTotal += amt;
+            } else {
+                personalTotal += amt;
+            }
             
-            let dateStr = item.date ? item.date.toString().substring(5, 10) : ''; // 월-일 형태로 보기 쉽게
+            let dateStr = item.date ? item.date.toString().substring(5, 10) : '';
 
             const row = `<tr>
                 <td>${dateStr}</td>
@@ -295,8 +306,8 @@
         });
 
         document.getElementById('totalDisplay').innerText = `${total.toLocaleString()} 원`;
-        document.getElementById('husbandSpent').innerText = `${husbandTotal.toLocaleString()}원`;
-        document.getElementById('wifeSpent').innerText = `${wifeTotal.toLocaleString()}원`;
+        document.getElementById('husbandSpent').innerText = `${personalTotal.toLocaleString()}원`;
+        document.getElementById('wifeSpent').innerText = `${commonTotal.toLocaleString()}원`;
     }
 </script>
 
