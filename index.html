@@ -103,7 +103,6 @@
 <body>
 
 <div class="container">
-    <!-- 평균 환율 대시보드 -->
     <div class="card summary-card">
         <div class="summary-title">평균 환율 (평단가)</div>
         <div class="avg-rate" id="avgRate">0.00 원</div>
@@ -113,7 +112,6 @@
         </div>
     </div>
 
-    <!-- 환전 기록 입력창 -->
     <div class="card">
         <h3 style="margin-top:0; margin-bottom: 16px; font-size: 18px;">환전 내역 추가</h3>
         <div class="form-group">
@@ -135,7 +133,6 @@
         <button class="btn" onclick="addRecord()" id="submitBtn">기록하기</button>
     </div>
 
-    <!-- 환전 히스토리 -->
     <div class="card">
         <h3 style="margin-top:0; margin-bottom: 12px; font-size: 18px;">환전 히스토리</h3>
         <div id="historyList">데이터 로딩 중...</div>
@@ -143,41 +140,45 @@
 </div>
 
 <script>
-    // 👇 구글 웹 앱 URL 대입
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyFUTV9X_LgZwd7jsZ4w7lhZE3IeMe6ZEk8yRBOJilrjuvbC8FTJAJzjg8dKsa_zc5ZGA/exec";
+    // ⚠️ 아래에 복사한 구글 앱스 스크립트 새 웹 앱 URL을 따옴표 안에 꼭 넣어주세요!
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxLzHYUcjhIvLYiM3n5GSrduGJxP6JmMJU38_ShYA5-8asYXSfoCAlehnBQ2YquxKej7Q/exec";
 
-    // 오늘 날짜 기본 세팅
     document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
 
     function loadData() {
-        fetch(SCRIPT_URL)
-        .then(res => res.json())
-        .then(data => {
-            // 요약 데이터 업데이트
-            document.getElementById('avgRate').innerText = data.summary.avgRate.toFixed(2) + ' 원';
-            document.getElementById('totalUsd').innerText = '$' + data.summary.totalUsd.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            document.getElementById('totalKrw').innerText = data.summary.totalKrw.toLocaleString() + '원';
+        if (!SCRIPT_URL || SCRIPT_URL.includes("여기에_구글")) {
+            document.getElementById('historyList').innerText = 'SCRIPT_URL을 입력해주세요.';
+            return;
+        }
 
-            // 목록 업데이트
+        fetch(SCRIPT_URL)
+        .then(res => {
+            if (!res.ok) throw new Error("네트워크 응답 에러");
+            return res.json();
+        })
+        .then(data => {
+            document.getElementById('avgRate').innerText = (data.summary.avgRate || 0).toFixed(2) + ' 원';
+            document.getElementById('totalUsd').innerText = '$' + (data.summary.totalUsd || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            document.getElementById('totalKrw').innerText = (data.summary.totalKrw || 0).toLocaleString() + '원';
+
             const listEl = document.getElementById('historyList');
-            if (data.history.length === 0) {
+            if (!data.history || data.history.length === 0) {
                 listEl.innerHTML = '<div style="color:#8b95a1; text-align:center; padding: 20px 0;">기록된 내역이 없습니다.</div>';
                 return;
             }
 
             let html = '';
-            // 최신순 정렬
-            data.history.reverse().forEach(item => {
+            data.history.slice().reverse().forEach(item => {
                 let d = item.date ? item.date.toString().substring(0, 10) : '';
                 html += `
                     <div class="history-item">
                         <div>
-                            <div style="font-weight: bold;">${item.rate.toLocaleString()}원</div>
+                            <div style="font-weight: bold;">${Number(item.rate).toLocaleString()}원</div>
                             <div class="date-memo">${d} ${item.memo ? '· ' + item.memo : ''}</div>
                         </div>
                         <div class="amounts">
-                            <div class="usd-val">+$${item.usd.toFixed(2)}</div>
-                            <div style="font-size: 12px; color: #8b95a1;">${item.krw.toLocaleString()}원</div>
+                            <div class="usd-val">+$${Number(item.usd).toFixed(2)}</div>
+                            <div style="font-size: 12px; color: #8b95a1;">${Number(item.krw).toLocaleString()}원</div>
                         </div>
                     </div>
                 `;
@@ -186,7 +187,7 @@
         })
         .catch(err => {
             console.error(err);
-            document.getElementById('historyList').innerText = '데이터를 불러오는 데 실패했습니다.';
+            document.getElementById('historyList').innerText = '데이터를 불러오지 못했습니다. 앱스 스크립트 URL 및 배포 설정을 확인하세요.';
         });
     }
 
@@ -207,26 +208,28 @@
 
         fetch(SCRIPT_URL, {
             method: 'POST',
+            mode: 'no-cors', // CORS 차단 방지 모드
+            headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify({ date, krw, rate, memo })
         })
-        .then(res => res.json())
-        .then(res => {
+        .then(() => {
             btn.innerText = '기록하기';
             btn.disabled = false;
             document.getElementById('inputKrw').value = '';
             document.getElementById('inputRate').value = '';
             document.getElementById('inputMemo').value = '';
-            loadData();
+            
+            // 데이터 등록 후 1초 뒤 새로고침 (구글 시트 반영 시간 고려)
+            setTimeout(loadData, 1000);
         })
         .catch(err => {
             console.error(err);
-            alert('저장에 실패했습니다.');
+            alert('저장 중 오류가 발생했습니다.');
             btn.innerText = '기록하기';
             btn.disabled = false;
         });
     }
 
-    // 초기 로딩
     loadData();
 </script>
 
