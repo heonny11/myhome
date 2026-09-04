@@ -77,11 +77,17 @@
             font-weight: bold;
             cursor: pointer;
         }
+        .btn-danger {
+            background-color: #f04452;
+        }
+        .btn-secondary {
+            background-color: #8b95a1;
+        }
         .history-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px 0;
+            padding: 14px 0;
             border-bottom: 1px solid #f2f4f6;
         }
         .history-item:last-child {
@@ -90,6 +96,7 @@
         .date-memo {
             font-size: 13px;
             color: #8b95a1;
+            margin-top: 2px;
         }
         .amounts {
             text-align: right;
@@ -98,11 +105,55 @@
         .usd-val {
             color: #3182f6;
         }
+        .action-btns {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+            justify-content: flex-end;
+        }
+        .action-btn {
+            font-size: 11px;
+            padding: 4px 8px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            background: #f2f4f6;
+            color: #4e5968;
+            font-weight: bold;
+        }
+        .action-btn.del {
+            color: #f04452;
+            background: #ffebee;
+        }
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: white;
+            padding: 24px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 400px;
+            box-sizing: border-box;
+        }
+        .modal-btns {
+            display: flex;
+            gap: 8px;
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <!-- 요약 대시보드 -->
     <div class="card summary-card">
         <div class="summary-title">평균 환율 (평단가)</div>
         <div class="avg-rate" id="avgRate">0.00 원</div>
@@ -112,6 +163,7 @@
         </div>
     </div>
 
+    <!-- 신규 입력 폼 -->
     <div class="card">
         <h3 style="margin-top:0; margin-bottom: 16px; font-size: 18px;">환전 내역 추가</h3>
         <div class="form-group">
@@ -133,15 +185,44 @@
         <button class="btn" onclick="addRecord()" id="submitBtn">기록하기</button>
     </div>
 
+    <!-- 내역 히스토리 -->
     <div class="card">
         <h3 style="margin-top:0; margin-bottom: 12px; font-size: 18px;">환전 히스토리</h3>
         <div id="historyList">데이터 로딩 중...</div>
     </div>
 </div>
 
+<!-- 수정 모달 창 -->
+<div class="modal" id="editModal">
+    <div class="modal-content">
+        <h3 style="margin-top:0; margin-bottom: 16px;">환전 내역 수정</h3>
+        <input type="hidden" id="editRowIndex">
+        <div class="form-group">
+            <label>환전 날짜</label>
+            <input type="date" id="editDate">
+        </div>
+        <div class="form-group">
+            <label>원화 금액 (KRW)</label>
+            <input type="number" id="editKrw">
+        </div>
+        <div class="form-group">
+            <label>적용 환율 (원/$)</label>
+            <input type="number" step="0.1" id="editRate">
+        </div>
+        <div class="form-group">
+            <label>메모 (선택)</label>
+            <input type="text" id="editMemo">
+        </div>
+        <div class="modal-btns">
+            <button class="btn btn-secondary" onclick="closeEditModal()">취소</button>
+            <button class="btn" onclick="saveEdit()" id="editSaveBtn">저장하기</button>
+        </div>
+    </div>
+</div>
+
 <script>
-    // ⚠️ 아래에 복사한 구글 앱스 스크립트 새 웹 앱 URL을 따옴표 안에 꼭 넣어주세요!
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxLzHYUcjhIvLYiM3n5GSrduGJxP6JmMJU38_ShYA5-8asYXSfoCAlehnBQ2YquxKej7Q/exec";
+    // ⚠️ 새 배포 URL로 교체해 주세요
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzLkWMZ-MeAaBBUcVzTfKKBMOqNb4pYB4INetEC1vZMKqtL-eO_FYvaDpC5CQuCR5FGLg/exec";
 
     document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
 
@@ -152,10 +233,7 @@
         }
 
         fetch(SCRIPT_URL)
-        .then(res => {
-            if (!res.ok) throw new Error("네트워크 응답 에러");
-            return res.json();
-        })
+        .then(res => res.json())
         .then(data => {
             document.getElementById('avgRate').innerText = (data.summary.avgRate || 0).toFixed(2) + ' 원';
             document.getElementById('totalUsd').innerText = '$' + (data.summary.totalUsd || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
@@ -170,6 +248,8 @@
             let html = '';
             data.history.slice().reverse().forEach(item => {
                 let d = item.date ? item.date.toString().substring(0, 10) : '';
+                let safeMemo = (item.memo || '').replace(/'/g, "\\'");
+                
                 html += `
                     <div class="history-item">
                         <div>
@@ -179,6 +259,10 @@
                         <div class="amounts">
                             <div class="usd-val">+$${Number(item.usd).toFixed(2)}</div>
                             <div style="font-size: 12px; color: #8b95a1;">${Number(item.krw).toLocaleString()}원</div>
+                            <div class="action-btns">
+                                <button class="action-btn" onclick="openEditModal(${item.rowIndex}, '${d}', ${item.krw}, ${item.rate}, '${safeMemo}')">수정</button>
+                                <button class="action-btn del" onclick="deleteRecord(${item.rowIndex})">삭제</button>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -187,7 +271,7 @@
         })
         .catch(err => {
             console.error(err);
-            document.getElementById('historyList').innerText = '데이터를 불러오지 못했습니다. 앱스 스크립트 URL 및 배포 설정을 확인하세요.';
+            document.getElementById('historyList').innerText = '데이터 로딩 실패';
         });
     }
 
@@ -208,9 +292,9 @@
 
         fetch(SCRIPT_URL, {
             method: 'POST',
-            mode: 'no-cors', // CORS 차단 방지 모드
+            mode: 'no-cors',
             headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({ date, krw, rate, memo })
+            body: JSON.stringify({ action: 'add', date, krw, rate, memo })
         })
         .then(() => {
             btn.innerText = '기록하기';
@@ -218,15 +302,80 @@
             document.getElementById('inputKrw').value = '';
             document.getElementById('inputRate').value = '';
             document.getElementById('inputMemo').value = '';
-            
-            // 데이터 등록 후 1초 뒤 새로고침 (구글 시트 반영 시간 고려)
             setTimeout(loadData, 1000);
         })
         .catch(err => {
             console.error(err);
-            alert('저장 중 오류가 발생했습니다.');
+            alert('저장 실패');
             btn.innerText = '기록하기';
             btn.disabled = false;
+        });
+    }
+
+    function openEditModal(rowIndex, date, krw, rate, memo) {
+        document.getElementById('editRowIndex').value = rowIndex;
+        document.getElementById('editDate').value = date;
+        document.getElementById('editKrw').value = krw;
+        document.getElementById('editRate').value = rate;
+        document.getElementById('editMemo').value = memo;
+        document.getElementById('editModal').style.display = 'flex';
+    }
+
+    function closeEditModal() {
+        document.getElementById('editModal').style.display = 'none';
+    }
+
+    function saveEdit() {
+        const rowIndex = document.getElementById('editRowIndex').value;
+        const date = document.getElementById('editDate').value;
+        const krw = document.getElementById('editKrw').value;
+        const rate = document.getElementById('editRate').value;
+        const memo = document.getElementById('editMemo').value;
+
+        if (!date || !krw || !rate) {
+            alert('모든 필드를 입력해 주세요.');
+            return;
+        }
+
+        const btn = document.getElementById('editSaveBtn');
+        btn.innerText = '저장 중...';
+        btn.disabled = true;
+
+        fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({ action: 'edit', rowIndex, date, krw, rate, memo })
+        })
+        .then(() => {
+            btn.innerText = '저장하기';
+            btn.disabled = false;
+            closeEditModal();
+            setTimeout(loadData, 1000);
+        })
+        .catch(err => {
+            console.error(err);
+            alert('수정 실패');
+            btn.innerText = '저장하기';
+            btn.disabled = false;
+        });
+    }
+
+    function deleteRecord(rowIndex) {
+        if (!confirm('정말 이 환전 내역을 삭제하시겠습니까?')) return;
+
+        fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({ action: 'delete', rowIndex })
+        })
+        .then(() => {
+            setTimeout(loadData, 1000);
+        })
+        .catch(err => {
+            console.error(err);
+            alert('삭제 실패');
         });
     }
 
