@@ -11,7 +11,6 @@
             --primary: #3b82f6;
             --primary-dark: #1d4ed8;
             --accent-green: #10b981;
-            --accent-purple: #8b5cf6;
             --text-dark: #0f172a;
             --text-gray: #64748b;
             --text-light: #94a3b8;
@@ -61,7 +60,7 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
 
-        /* 카드 입체감 공통 */
+        /* 카드 스타일 */
         .card {
             background: var(--card-bg);
             border-radius: 24px;
@@ -71,7 +70,7 @@
             border: 1px solid rgba(255,255,255,0.8);
         }
 
-        /* 고급스러운 그라데이션 메인 요약 카드 */
+        /* 메인 상단 요약 카드 (딥 인디고 그라데이션) */
         .summary-card {
             background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%);
             color: #ffffff;
@@ -79,16 +78,6 @@
             overflow: hidden;
             box-shadow: 0 14px 28px rgba(49, 46, 129, 0.25);
             border: 1px solid rgba(255, 255, 255, 0.15);
-        }
-        .summary-card::after {
-            content: '';
-            position: absolute;
-            top: -30%;
-            right: -20%;
-            width: 180px;
-            height: 180px;
-            background: radial-gradient(circle, rgba(139, 92, 246, 0.4) 0%, rgba(0,0,0,0) 70%);
-            pointer-events: none;
         }
         .summary-header {
             display: flex;
@@ -109,10 +98,9 @@
             border-radius: 20px;
             font-size: 12px;
             font-weight: 700;
-            backdrop-filter: blur(4px);
         }
         .avg-rate-val {
-            font-size: 36px;
+            font-size: 34px;
             font-weight: 800;
             color: #ffffff;
             letter-spacing: -0.8px;
@@ -146,7 +134,7 @@
             color: #f8fafc;
         }
 
-        /* 폼 타이틀 및 요소 */
+        /* 폼 요소 */
         .card-title {
             margin: 0 0 20px 0;
             font-size: 19px;
@@ -197,7 +185,7 @@
             pointer-events: none;
         }
 
-        /* 실시간 프리뷰 영역 */
+        /* 계산 프리뷰 */
         .calc-preview {
             background: #eff6ff;
             border: 1.5px dashed #bfdbfe;
@@ -232,7 +220,7 @@
         }
         .btn-submit:active { transform: scale(0.98); }
 
-        /* 히스토리 항목 */
+        /* 히스토리 목록 */
         .history-item {
             display: flex;
             justify-content: space-between;
@@ -252,7 +240,7 @@
         .btn-edit { background: #f1f5f9; color: var(--text-gray); border: none; padding: 7px 11px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; }
         .btn-delete { background: #fef2f2; color: var(--danger); border: none; padding: 7px 11px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; }
 
-        /* 모달 팝업 */
+        /* 모달 레이어 */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px);
@@ -263,7 +251,6 @@
             border-radius: 24px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);
         }
 
-        /* 로딩 스피너 */
         .spinner-container { display: flex; justify-content: center; padding: 24px 0; }
         .spinner { width: 28px; height: 28px; border: 3px solid var(--border); border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -272,7 +259,7 @@
 <body>
 
 <div class="container">
-    <!-- 탭 선택 -->
+    <!-- 탭 버튼 -->
     <div class="tab-group">
         <button class="tab-btn active" id="tabUSD" onclick="switchCurrency('USD')">🇺🇸 미국 달러 (USD)</button>
         <button class="tab-btn" id="tabJPY" onclick="switchCurrency('JPY')">🇯🇵 일본 엔화 (JPY)</button>
@@ -282,7 +269,7 @@
     <div class="card summary-card">
         <div class="summary-header">
             <span class="summary-title" id="summaryTitle">📈 미국 달러 평균환율</span>
-            <div class="live-badge" id="liveRate">⚡ 실시간 조회 중...</div>
+            <div class="live-badge" id="liveRate">⚡ 실시간: 조회 중...</div>
         </div>
         <div class="avg-rate-val" id="avgRate">0.00 원</div>
         <div class="summary-grid">
@@ -297,7 +284,7 @@
         </div>
     </div>
 
-    <!-- 환전 내역 입력 카드 -->
+    <!-- 입력 카드 -->
     <div class="card">
         <h3 class="card-title">✨ 환전 내역 추가</h3>
         
@@ -322,7 +309,6 @@
             </div>
         </div>
 
-        <!-- 실시간 예상금액 -->
         <div class="calc-preview">
             <span>🎁 예상 환전 금액</span>
             <span class="highlight" id="previewAmount">$0.00</span>
@@ -345,7 +331,7 @@
     </div>
 </div>
 
-<!-- 수정 모달 팝업 -->
+<!-- 수정 모달 -->
 <div class="modal-overlay" id="editModal">
     <div class="modal-card">
         <h3 class="card-title">✏️ 환전 내역 수정</h3>
@@ -374,13 +360,37 @@
 </div>
 
 <script>
-    // ⚠️ 자신의 구글 앱스 스크립트 '새 배포' URL을 넣어주세요!
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxLzHYUcjhIvLYiM3n5GSrduGJxP6JmMJU38_ShYA5-8asYXSfoCAlehnBQ2YquxKej7Q/exec";
+    // ⚠️ 본인의 구글 앱스 스크립트 '새 배포' URL을 넣어주세요!
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwghUm91hradI3ichcIYp6TqijYmRUGeyPAj3c2vpT1mcMm_FcGd-mRMPt2mj7nQ9U2fQ/exec";
 
     let currentCurrency = 'USD';
     let rawData = null;
+    let liveRates = { USD: 0, JPY: 0 };
 
     document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
+
+    // 브라우저에서 직접 오픈 실시간 환율 호출
+    async function fetchLiveExchangeRates() {
+        try {
+            const res = await fetch("https://open.er-api.com/v6/latest/USD");
+            const data = await res.json();
+            if (data && data.rates) {
+                liveRates.USD = data.rates.KRW;
+                liveRates.JPY = (data.rates.KRW / data.rates.JPY) * 100; // 100엔 기준
+                updateLiveRateUI();
+            }
+        } catch (e) {
+            console.error("실시간 환율 조회 실패", e);
+            document.getElementById('liveRate').innerText = "⚡ 실시간: 조회 실패";
+        }
+    }
+
+    function updateLiveRateUI() {
+        const rate = liveRates[currentCurrency];
+        if (rate > 0) {
+            document.getElementById('liveRate').innerText = `⚡ 실시간: ${rate.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}원`;
+        }
+    }
 
     function switchCurrency(curr) {
         currentCurrency = curr;
@@ -394,6 +404,7 @@
             document.getElementById('summaryTitle').innerText = '📈 일본 엔화 평균환율 (100엔당)';
             document.getElementById('rateLabel').innerText = '💱 적용 환율 (원/100엔)';
         }
+        updateLiveRateUI();
         calculatePreview();
         renderData();
     }
@@ -445,17 +456,13 @@
     function renderData() {
         if (!rawData) return;
 
-        const summary = rawData[currentCurrency]?.summary || { avgRate: 0, totalForeign: 0, totalKrw: 0, liveRate: 0 };
+        const summary = rawData[currentCurrency]?.summary || { avgRate: 0, totalForeign: 0, totalKrw: 0 };
         const history = rawData[currentCurrency]?.history || [];
         const symbol = currentCurrency === 'USD' ? '$' : '¥';
         
         document.getElementById('avgRate').innerText = summary.avgRate.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' 원';
         document.getElementById('totalForeign').innerText = symbol + summary.totalForeign.toLocaleString(undefined, {maximumFractionDigits: 2});
         document.getElementById('totalKrw').innerText = summary.totalKrw.toLocaleString() + ' 원';
-        
-        if (summary.liveRate) {
-            document.getElementById('liveRate').innerText = `⚡ 실시간: ${summary.liveRate.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}원`;
-        }
 
         const listEl = document.getElementById('historyList');
         if (history.length === 0) {
@@ -490,6 +497,14 @@
         listEl.innerHTML = html;
     }
 
+    async function sendRequest(params) {
+        const query = new URLSearchParams(params).toString();
+        await fetch(`${SCRIPT_URL}?${query}`, { mode: 'no-cors' });
+        // 데이터 처리 반영을 위해 1.2초 대기 후 동기화
+        await new Promise(r => setTimeout(r, 1200));
+        await loadData();
+    }
+
     async function addRecord() {
         const date = document.getElementById('inputDate').value;
         const krw = document.getElementById('inputKrw').value.replace(/,/g, '');
@@ -503,20 +518,17 @@
 
         const btn = document.getElementById('submitBtn');
         btn.innerText = '저장 중...';
+        btn.disabled = true;
 
-        await fetch(SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({ action: 'add', currency: currentCurrency, date, krw, rate, memo })
-        });
+        await sendRequest({ action: 'add', currency: currentCurrency, date, krw, rate, memo });
 
         document.getElementById('inputKrw').value = '';
         document.getElementById('inputRate').value = '';
         document.getElementById('inputMemo').value = '';
-        btn.innerText = '기록하기';
+        calculatePreview();
         
-        setTimeout(loadData, 1000);
+        btn.innerText = '기록하기';
+        btn.disabled = false;
     }
 
     function openEditModal(index) {
@@ -539,28 +551,19 @@
         const memo = document.getElementById('editMemo').value;
 
         closeModal();
+        document.getElementById('historyList').innerHTML = '<div class="spinner-container"><div class="spinner"></div></div>';
         
-        await fetch(SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({ action: 'update', currency: currentCurrency, index, date, krw, rate, memo })
-        });
-
-        setTimeout(loadData, 1000);
+        await sendRequest({ action: 'update', currency: currentCurrency, index, date, krw, rate, memo });
     }
 
     async function deleteRecord(currency, index) {
         if (!confirm('정말 삭제하시겠습니까?')) return;
-        await fetch(SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({ action: 'delete', currency, index })
-        });
-        setTimeout(loadData, 1000);
+        document.getElementById('historyList').innerHTML = '<div class="spinner-container"><div class="spinner"></div></div>';
+        await sendRequest({ action: 'delete', currency, index });
     }
 
+    // 초기 실행
+    fetchLiveExchangeRates();
     loadData();
 </script>
 
