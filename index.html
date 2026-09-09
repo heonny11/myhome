@@ -60,22 +60,37 @@
 
         .container { max-width: 480px; margin: 0 auto; }
 
-        /* 상단 유틸리티 바 (다크모드 토글) */
+        /* 상단 유틸리티 바 (모드 변경, 다크모드, 관리자) */
         .top-util-bar {
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between;
+            align-items: center;
             margin-bottom: 12px;
+            gap: 6px;
         }
-        .theme-toggle-btn {
+        .util-btn {
             background: var(--card-bg);
             border: 1px solid var(--border);
             color: var(--text-dark);
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 13px;
+            padding: 6px 10px;
+            border-radius: 18px;
+            font-size: 12px;
             font-weight: 700;
             cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .util-btn.demo-active {
+            background: #fef3c7;
+            color: #d97706;
+            border-color: #f59e0b;
+        }
+        .util-btn.admin-active {
+            background: #dbeafe;
+            color: #1d4ed8;
+            border-color: #3b82f6;
         }
 
         /* 탭 스타일 */
@@ -320,7 +335,6 @@
             box-shadow: 0 8px 16px rgba(37, 99, 235, 0.25);
         }
 
-        /* 엑셀 내보내기 버튼 */
         .btn-export {
             background: var(--input-bg); border: 1px solid var(--border); color: var(--text-dark);
             padding: 6px 12px; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer;
@@ -355,13 +369,27 @@
         .btn-edit { background: var(--input-bg); color: var(--text-gray); border: 1px solid var(--border); padding: 6px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; }
         .btn-delete { background: rgba(239, 68, 68, 0.1); color: var(--accent-red); border: none; padding: 6px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; }
 
-        /* 수정 모달 */
+        /* 수정 및 로그인 모달 */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px);
             display: none; justify-content: center; align-items: center; z-index: 1000;
         }
         .modal-card { background: var(--card-bg); width: 90%; max-width: 400px; border-radius: 24px; padding: 22px; border: 1px solid var(--border); }
+
+        .demo-notice-bar {
+            background: #fffbeeb0;
+            border: 1px solid #fcd34d;
+            color: #b45309;
+            padding: 10px 14px;
+            border-radius: 14px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
 
         .spinner-container { display: flex; justify-content: center; padding: 24px 0; }
         .spinner { width: 28px; height: 28px; border: 3px solid var(--border); border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
@@ -371,9 +399,19 @@
 <body>
 
 <div class="container">
-    <!-- 다크모드 상단 토글 -->
+    <!-- 상단 유틸리티 바 (데모 스위치 / 관리자 / 다크모드) -->
     <div class="top-util-bar">
-        <button class="theme-toggle-btn" onclick="toggleDarkMode()" id="themeBtn">🌙 다크 모드</button>
+        <button class="util-btn" id="demoToggleBtn" onclick="toggleDemoMode()">⚡ 데모 모드: OFF</button>
+        <div style="display:flex; gap:6px;">
+            <button class="util-btn" id="adminBtn" onclick="openAdminModal()">🔒 관리자</button>
+            <button class="util-btn" onclick="toggleDarkMode()" id="themeBtn">🌙 다크</button>
+        </div>
+    </div>
+
+    <!-- 데모 모드 안내 바 (데모 모드 활성화 시에만 연하게 표시) -->
+    <div class="demo-notice-bar" id="demoNotice" style="display: none;">
+        <span>🧪 현재 체험(데모) 모드입니다. (내 기기에만 임시 저장)</span>
+        <button onclick="toggleDemoMode()" style="border:none; background:transparent; color:#b45309; font-weight:800; cursor:pointer;">[종료]</button>
     </div>
 
     <!-- 탭 선택 -->
@@ -552,8 +590,40 @@
             <input type="text" id="editMemo">
         </div>
         <div style="display:flex; gap:10px; margin-top:20px;">
-            <button class="btn-submit" style="background:#cbd5e1; color:#334155;" onclick="closeModal()">취소</button>
+            <button class="btn-submit" style="background:#cbd5e1; color:#334155;" onclick="closeModal('editModal')">취소</button>
             <button class="btn-submit" onclick="saveEdit()">수정 완료</button>
+        </div>
+    </div>
+</div>
+
+<!-- 🔑 관리자 로그인 모달 -->
+<div class="modal-overlay" id="adminModal">
+    <div class="modal-card">
+        <h3 class="card-title" id="adminModalTitle">👑 관리자 인증</h3>
+        
+        <div id="adminLoginForm">
+            <div class="form-group">
+                <label>👤 관리자 아이디</label>
+                <input type="text" id="adminIdInput" placeholder="아이디 입력">
+            </div>
+            <div class="form-group">
+                <label>🔑 비밀번호</label>
+                <input type="password" id="adminPwInput" placeholder="비밀번호 입력">
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="btn-submit" style="background:#cbd5e1; color:#334155;" onclick="closeModal('adminModal')">취소</button>
+                <button class="btn-submit" onclick="loginAdmin()">로그인</button>
+            </div>
+        </div>
+
+        <div id="adminLoggedInView" style="display:none;">
+            <p style="font-size:14px; color:var(--text-gray); font-weight:700; margin-bottom:16px;">
+                ✅ <strong style="color:var(--primary);">dldrjdwkd</strong> 님으로 인증되었습니다. 전체 내역 편집 및 백업 관리 권한이 부여되었습니다.
+            </p>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                <button class="btn-submit" style="background:#059669;" onclick="exportToCSV()">📥 전체 데이터 백업 (CSV)</button>
+                <button class="btn-submit" style="background:#dc2626;" onclick="logoutAdmin()">로그아웃</button>
+            </div>
         </div>
     </div>
 </div>
@@ -561,28 +631,108 @@
 <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxLzHYUcjhIvLYiM3n5GSrduGJxP6JmMJU38_ShYA5-8asYXSfoCAlehnBQ2YquxKej7Q/exec";
 
+    // 🔒 관리자 계정 정보
+    const ADMIN_ID = "dldrjdwkd";
+    const ADMIN_PW = "tmdgjs18";
+
     let currentCurrency = 'USD';
     let rawData = null;
     let liveRates = { USD: 0, JPY: 0, prevUSD: 0, prevJPY: 0 };
     let chartInstance = null;
     let currentPeriod = 'today';
     let activeFilter = 'ALL';
-    let lastEditedField = 'KRW'; // 'KRW' or 'FOREIGN'
+    let lastEditedField = 'KRW';
+    
+    let isDemoMode = false;
+    let isAdmin = false;
+
+    // 데모 모드용 로컬 스토리지 초기 더미 데이터
+    let demoData = JSON.parse(localStorage.getItem('demoData')) || {
+        USD: {
+            summary: { avgRate: 1350.50, totalForeign: 500, totalKrw: 675250 },
+            history: [
+                { date: '2026-03-01', krw: 675250, rate: 1350.50, foreign: 500, memo: '📈 주식투자 (데모)' }
+            ]
+        },
+        JPY: {
+            summary: { avgRate: 910.00, totalForeign: 50000, totalKrw: 455000 },
+            history: [
+                { date: '2026-03-05', krw: 455000, rate: 910.00, foreign: 50000, memo: '✈️ 해외여행 (데모)' }
+            ]
+        }
+    };
 
     setQuickDate(0);
 
-    // 🌙 다크모드 설정
+    // 다크모드 초기화
     if (localStorage.getItem('theme') === 'dark') {
         document.body.classList.add('dark-mode');
-        document.getElementById('themeBtn').innerText = '☀️ 라이트 모드';
+        document.getElementById('themeBtn').innerText = '☀️ 라이트';
     }
 
     function toggleDarkMode() {
         document.body.classList.toggle('dark-mode');
         const isDark = document.body.classList.contains('dark-mode');
-        document.getElementById('themeBtn').innerText = isDark ? '☀️ 라이트 모드' : '🌙 다크 모드';
+        document.getElementById('themeBtn').innerText = isDark ? '☀️ 라이트' : '🌙 다크';
         localStorage.setItem('theme', isDark ? 'dark' : 'light');
     }
+
+    // 🧪 데모 모드 토글
+    function toggleDemoMode() {
+        isDemoMode = !isDemoMode;
+        const btn = document.getElementById('demoToggleBtn');
+        const notice = document.getElementById('demoNotice');
+
+        if (isDemoMode) {
+            btn.innerText = '🧪 데모 모드: ON';
+            btn.classList.add('demo-active');
+            notice.style.display = 'flex';
+        } else {
+            btn.innerText = '⚡ 데모 모드: OFF';
+            btn.classList.remove('demo-active');
+            notice.style.display = 'none';
+        }
+
+        loadData();
+    }
+
+    // 🔑 관리자 로그인 모달 제어
+    function openAdminModal() {
+        document.getElementById('adminModal').style.display = 'flex';
+        if (isAdmin) {
+            document.getElementById('adminLoginForm').style.display = 'none';
+            document.getElementById('adminLoggedInView').style.display = 'block';
+        } else {
+            document.getElementById('adminLoginForm').style.display = 'block';
+            document.getElementById('adminLoggedInView').style.display = 'none';
+        }
+    }
+
+    function loginAdmin() {
+        const id = document.getElementById('adminIdInput').value.trim();
+        const pw = document.getElementById('adminPwInput').value.trim();
+
+        if (id === ADMIN_ID && pw === ADMIN_PW) {
+            isAdmin = true;
+            document.getElementById('adminBtn').innerText = '👑 관리자 인증됨';
+            document.getElementById('adminBtn').classList.add('admin-active');
+            alert('👑 관리자로 로그인되었습니다.');
+            openAdminModal();
+            renderData();
+        } else {
+            alert('❌ 관리자 아이디 또는 비밀번호가 올바르지 않습니다.');
+        }
+    }
+
+    function logoutAdmin() {
+        isAdmin = false;
+        document.getElementById('adminBtn').innerText = '🔒 관리자';
+        document.getElementById('adminBtn').classList.remove('admin-active');
+        closeModal('adminModal');
+        renderData();
+    }
+
+    function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
 
     function setQuickDate(daysAgo, btnEl = null) {
         const d = new Date();
@@ -640,7 +790,6 @@
         }
     }
 
-    // 📈 내 평단가 대비 실시간 평가 손익 계산
     function calculateProfitLoss() {
         if (!rawData) return;
         const summary = rawData[currentCurrency]?.summary || { avgRate: 0, totalForeign: 0 };
@@ -669,7 +818,6 @@
         profitEl.style.color = isProfit ? '#34d399' : '#f87171';
     }
 
-    // 🎯 목표가 도달 시 강조 배너
     function checkTargetRate() {
         const target = parseFloat(document.getElementById('targetRateInput').value);
         const current = liveRates[currentCurrency];
@@ -683,11 +831,11 @@
         }
 
         if (current <= target) {
-            statusEl.innerText = '🔥 목표가 도달! 지금 환전!';
+            statusEl.innerText = '🔥 목표가 도달!';
             statusEl.style.color = '#34d399';
             boxEl.classList.add('reached');
         } else {
-            statusEl.innerText = '⏳ 목표가보다 높음';
+            statusEl.innerText = '⏳ 대기 중';
             statusEl.style.color = '#f87171';
             boxEl.classList.remove('reached');
         }
@@ -807,7 +955,6 @@
         if (document.getElementById('chartContainer').style.display === 'block') renderChart();
     }
 
-    // 🔄 양방향 실시간 계산기 로직
     function formatNumberInput(input, isRate = false) {
         let val = input.value.replace(/[^0-9.]/g, '');
         const parts = val.split('.');
@@ -881,6 +1028,13 @@
     }
 
     async function loadData() {
+        if (isDemoMode) {
+            rawData = demoData;
+            renderData();
+            calculateProfitLoss();
+            return;
+        }
+
         try {
             const res = await fetch(SCRIPT_URL);
             rawData = await res.json();
@@ -899,6 +1053,25 @@
         renderData();
     }
 
+    function recalculateDemoSummary(curr) {
+        const history = demoData[curr].history;
+        let totalKrw = 0;
+        let totalForeign = 0;
+
+        history.forEach(h => {
+            totalKrw += Number(h.krw) || 0;
+            totalForeign += Number(h.foreign) || 0;
+        });
+
+        let avgRate = 0;
+        if (totalForeign > 0) {
+            avgRate = curr === 'USD' ? (totalKrw / totalForeign) : ((totalKrw / totalForeign) * 100);
+        }
+
+        demoData[curr].summary = { avgRate, totalForeign, totalKrw };
+        localStorage.setItem('demoData', JSON.stringify(demoData));
+    }
+
     function renderData() {
         if (!rawData) return;
 
@@ -912,7 +1085,6 @@
 
         const listEl = document.getElementById('historyList');
         
-        // 필터링 적용
         const filteredHistory = history.filter(item => {
             if (activeFilter === 'ALL') return true;
             return (item.memo || '').includes(activeFilter);
@@ -973,7 +1145,6 @@
         listEl.innerHTML = html;
     }
 
-    // 📥 CSV(엑셀) 저장 기능
     function exportToCSV() {
         if (!rawData || !rawData[currentCurrency]) return;
         const history = rawData[currentCurrency].history || [];
@@ -983,7 +1154,7 @@
             return;
         }
 
-        let csvContent = "data:text/csv;charset=utf-8,\uFEFF"; // UTF-8 BOM 추가 (한글 깨짐 방지)
+        let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
         csvContent += "날짜,통화,원화금액(KRW),적용환율,외화금액,메모\n";
 
         history.forEach(row => {
@@ -1011,6 +1182,7 @@
         const date = document.getElementById('inputDate').value;
         const krw = document.getElementById('inputKrw').value.replace(/,/g, '');
         const rate = document.getElementById('inputRate').value.replace(/,/g, '');
+        const foreign = document.getElementById('inputForeign').value.replace(/,/g, '');
         const memo = document.getElementById('inputMemo').value;
 
         if (!date || !krw || !rate) {
@@ -1022,7 +1194,15 @@
         btn.innerText = '저장 중...';
         btn.disabled = true;
 
-        await sendRequest({ action: 'add', currency: currentCurrency, date, krw, rate, memo });
+        if (isDemoMode) {
+            demoData[currentCurrency].history.push({
+                date, krw: Number(krw), rate: Number(rate), foreign: Number(foreign), memo
+            });
+            recalculateDemoSummary(currentCurrency);
+            loadData();
+        } else {
+            await sendRequest({ action: 'add', currency: currentCurrency, date, krw, rate, memo });
+        }
 
         document.getElementById('inputKrw').value = '';
         document.getElementById('inputForeign').value = '';
@@ -1044,8 +1224,6 @@
         document.getElementById('editModal').style.display = 'flex';
     }
 
-    function closeModal() { document.getElementById('editModal').style.display = 'none'; }
-
     async function saveEdit() {
         const index = document.getElementById('editIndex').value;
         const date = document.getElementById('editDate').value;
@@ -1053,16 +1231,37 @@
         const rate = document.getElementById('editRate').value.replace(/,/g, '');
         const memo = document.getElementById('editMemo').value;
 
-        closeModal();
+        closeModal('editModal');
         document.getElementById('historyList').innerHTML = '<div class="spinner-container"><div class="spinner"></div></div>';
         
-        await sendRequest({ action: 'update', currency: currentCurrency, index, date, krw, rate, memo });
+        if (isDemoMode) {
+            let calcForeign = 0;
+            if (currentCurrency === 'USD') {
+                calcForeign = Number(krw) / Number(rate);
+            } else {
+                calcForeign = (Number(krw) / Number(rate)) * 100;
+            }
+            demoData[currentCurrency].history[index] = {
+                date, krw: Number(krw), rate: Number(rate), foreign: calcForeign, memo
+            };
+            recalculateDemoSummary(currentCurrency);
+            loadData();
+        } else {
+            await sendRequest({ action: 'update', currency: currentCurrency, index, date, krw, rate, memo });
+        }
     }
 
     async function deleteRecord(currency, index) {
         if (!confirm('정말 삭제하시겠습니까?')) return;
         document.getElementById('historyList').innerHTML = '<div class="spinner-container"><div class="spinner"></div></div>';
-        await sendRequest({ action: 'delete', currency, index });
+        
+        if (isDemoMode) {
+            demoData[currency].history.splice(index, 1);
+            recalculateDemoSummary(currency);
+            loadData();
+        } else {
+            await sendRequest({ action: 'delete', currency, index });
+        }
     }
 
     // 초기 실행
