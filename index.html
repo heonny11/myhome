@@ -1016,53 +1016,64 @@
         listEl.innerHTML = html;
     }
 
-    // ⭐ [핵심 수정] 기록하기 전송 방식 버그 픽스
-    async function sendRequest(params) {
-        const query = new URLSearchParams(params).toString();
-        // CORS 및 백엔드 스크립트 연결 안정화를 위한 jsonp 방식 호환 호출
-        await fetch(`${SCRIPT_URL}?${query}`, { mode: 'no-cors' });
-        
-        // 데이터가 Google Sheet에 전달되어 가공될 때까지 1.2초 대기 후 재로드
-        await new Promise(r => setTimeout(r, 1200));
-        await loadData();
+// 통신 버그 픽스된 요청 전송 함수
+async function sendRequest(params) {
+    const url = new URL(SCRIPT_URL);
+    Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+
+    // GAS 버그 방지를 위한 no-cors 모드 요청
+    await fetch(url.toString(), {
+        method: 'GET',
+        mode: 'no-cors'
+    });
+    
+    // 시트 반영 시간 대기 후 동기화
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    await loadData();
+}
+
+async function addRecord() {
+    const date = document.getElementById('inputDate').value;
+    const krw = document.getElementById('inputKrw').value.replace(/,/g, '');
+    const rate = document.getElementById('inputRate').value.replace(/,/g, '');
+    const memo = document.getElementById('inputMemo').value;
+
+    if (!date || !krw || !rate) {
+        alert('날짜, 원화 금액, 환율을 모두 입력해주세요!');
+        return;
     }
 
-    async function addRecord() {
-        const date = document.getElementById('inputDate').value;
-        const krw = document.getElementById('inputKrw').value.replace(/,/g, '');
-        const rate = document.getElementById('inputRate').value.replace(/,/g, '');
-        const memo = document.getElementById('inputMemo').value;
+    const btn = document.getElementById('submitBtn');
+    btn.innerText = '저장 중...';
+    btn.disabled = true;
 
-        if (!date || !krw || !rate) {
-            alert('날짜, 원화 금액, 환율을 모두 입력해주세요!');
-            return;
-        }
-
-        const btn = document.getElementById('submitBtn');
-        btn.innerText = '저장 중...';
-        btn.disabled = true;
-
-        if (isDemoMode) {
-            let foreign = currentCurrency === 'USD' ? (Number(krw) / Number(rate)) : ((Number(krw) / Number(rate)) * 100);
-            demoData[currentCurrency].history.push({
-                date, krw: Number(krw), rate: Number(rate), foreign, memo
-            });
-            localStorage.setItem('demoData', JSON.stringify(demoData));
-            loadData();
-        } else {
-            document.getElementById('historyList').innerHTML = '<div class="spinner-container"><div class="spinner"></div></div>';
-            await sendRequest({ action: 'add', currency: currentCurrency, date, krw, rate, memo: encodeURIComponent(memo) });
-        }
-
-        document.getElementById('inputKrw').value = '';
-        document.getElementById('inputForeign').value = '';
-        document.getElementById('inputMemo').value = '';
-        recalculate();
-        
-        btn.innerText = '기록하기';
-        btn.disabled = false;
+    if (isDemoMode) {
+        let foreign = currentCurrency === 'USD' ? (Number(krw) / Number(rate)) : ((Number(krw) / Number(rate)) * 100);
+        demoData[currentCurrency].history.push({
+            date, krw: Number(krw), rate: Number(rate), foreign, memo
+        });
+        localStorage.setItem('demoData', JSON.stringify(demoData));
+        loadData();
+    } else {
+        document.getElementById('historyList').innerHTML = '<div class="spinner-container"><div class="spinner"></div></div>';
+        await sendRequest({ 
+            action: 'add', 
+            currency: currentCurrency, 
+            date: date, 
+            krw: krw, 
+            rate: rate, 
+            memo: encodeURIComponent(memo) 
+        });
     }
 
+    document.getElementById('inputKrw').value = '';
+    document.getElementById('inputForeign').value = '';
+    document.getElementById('inputMemo').value = '';
+    recalculate();
+    
+    btn.innerText = '기록하기';
+    btn.disabled = false;
+}
     async function deleteRecord(currency, index) {
         if (!confirm('정말 삭제하시겠습니까?')) return;
         document.getElementById('historyList').innerHTML = '<div class="spinner-container"><div class="spinner"></div></div>';
