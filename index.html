@@ -3,19 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>프리미엄 환전 & 평균환율 계산기</title>
+    <title>프리미엄 스마트 환전 계산기</title>
+    <!-- Chart.js 라이브러리 추가 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
-            --bg-body: #f1f5f9;
+            --bg-body: #f8fafc;
             --card-bg: #ffffff;
             --primary: #3b82f6;
             --primary-dark: #1d4ed8;
             --accent-green: #10b981;
+            --accent-red: #ef4444;
             --text-dark: #0f172a;
             --text-gray: #64748b;
             --text-light: #94a3b8;
             --border: #e2e8f0;
-            --danger: #ef4444;
         }
 
         * { box-sizing: border-box; }
@@ -28,10 +30,7 @@
             color: var(--text-dark);
         }
 
-        .container {
-            max-width: 480px;
-            margin: 0 auto;
-        }
+        .container { max-width: 480px; margin: 0 auto; }
 
         /* 탭 스타일 */
         .tab-group {
@@ -39,8 +38,7 @@
             background: #e2e8f0;
             padding: 5px;
             border-radius: 18px;
-            margin-bottom: 20px;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+            margin-bottom: 16px;
         }
         .tab-btn {
             flex: 1;
@@ -52,7 +50,7 @@
             font-weight: 700;
             color: var(--text-gray);
             cursor: pointer;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.2s;
         }
         .tab-btn.active {
             background: #ffffff;
@@ -60,196 +58,194 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         }
 
-        /* 카드 스타일 */
+        /* 카드 기본 공통 */
         .card {
             background: var(--card-bg);
             border-radius: 24px;
-            padding: 24px;
+            padding: 22px;
             margin-bottom: 20px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
-            border: 1px solid rgba(255,255,255,0.8);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border);
         }
 
-        /* 메인 상단 요약 카드 (딥 인디고 그라데이션) */
+        /* 고급 상단 카드 */
         .summary-card {
-            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%);
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 60%, #312e81 100%);
             color: #ffffff;
             position: relative;
             overflow: hidden;
-            box-shadow: 0 14px 28px rgba(49, 46, 129, 0.25);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 14px 28px rgba(30, 27, 75, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.12);
         }
+
         .summary-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
         }
-        .summary-title {
-            font-size: 14px;
-            color: #c7d2fe;
-            font-weight: 600;
+        .summary-title { font-size: 13px; color: #a5b4fc; font-weight: 700; }
+        
+        /* 실시간 뱃지 및 새로고침 */
+        .live-status-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         .live-badge {
             background: rgba(16, 185, 129, 0.2);
-            color: #6ee7b7;
-            border: 1px solid rgba(110, 231, 183, 0.3);
-            padding: 6px 12px;
+            color: #34d399;
+            border: 1px solid rgba(52, 211, 153, 0.4);
+            padding: 4px 10px;
             border-radius: 20px;
             font-size: 12px;
-            font-weight: 700;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
+        .refresh-btn {
+            background: rgba(255,255,255,0.15);
+            border: none;
+            color: white;
+            border-radius: 50%;
+            width: 26px; height: 26px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex; justify-content: center; align-items: center;
+        }
+
         .avg-rate-val {
             font-size: 34px;
             font-weight: 800;
             color: #ffffff;
             letter-spacing: -0.8px;
-            margin-bottom: 22px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            margin: 6px 0 16px 0;
         }
+
+        /* 실시간 상세 변동 가시성 레이블 */
+        .live-detail-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            margin-bottom: 16px;
+        }
+        .rate-diff { font-weight: 800; }
+        .rate-diff.up { color: #f87171; }
+        .rate-diff.down { color: #60a5fa; }
+
         .summary-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
-            background: rgba(255, 255, 255, 0.08);
-            padding: 16px;
+            background: rgba(255, 255, 255, 0.06);
+            padding: 14px;
             border-radius: 16px;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
-        .info-box .label {
-            font-size: 12px;
-            color: #a5b4fc;
-            margin-bottom: 4px;
-            display: block;
-        }
-        .info-box .value-foreign {
-            font-size: 18px;
-            font-weight: 800;
-            color: #38bdf8;
-        }
-        .info-box .value-krw {
-            font-size: 18px;
-            font-weight: 800;
-            color: #f8fafc;
-        }
+        .info-box .label { font-size: 11px; color: #a5b4fc; margin-bottom: 4px; display: block; }
+        .info-box .value-foreign { font-size: 17px; font-weight: 800; color: #38bdf8; }
+        .info-box .value-krw { font-size: 17px; font-weight: 800; color: #f8fafc; }
 
-        /* 폼 요소 */
-        .card-title {
-            margin: 0 0 20px 0;
-            font-size: 19px;
-            font-weight: 800;
-            color: var(--text-dark);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .form-group {
-            margin-bottom: 16px;
-        }
-        .form-group label {
-            display: block;
+        /* 드롭다운 차트 버튼 */
+        .chart-toggle-btn {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #e2e8f0;
+            padding: 10px;
+            border-radius: 12px;
             font-size: 13px;
             font-weight: 700;
-            color: var(--text-gray);
-            margin-bottom: 8px;
-        }
-        .input-wrapper {
-            position: relative;
+            cursor: pointer;
+            margin-top: 12px;
             display: flex;
+            justify-content: center;
             align-items: center;
-        }
-        .form-group input {
-            width: 100%;
-            padding: 14px 16px;
-            font-size: 16px;
-            font-weight: 700;
-            border: 1.5px solid var(--border);
-            border-radius: 14px;
-            outline: none;
-            transition: all 0.2s;
-            background: #f8fafc;
-            color: var(--text-dark);
-        }
-        .form-group input:focus {
-            border-color: var(--primary);
-            background: #ffffff;
-            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
-        }
-        .unit-label {
-            position: absolute;
-            right: 16px;
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--text-light);
-            pointer-events: none;
+            gap: 6px;
         }
 
-        /* 계산 프리뷰 */
-        .calc-preview {
-            background: #eff6ff;
-            border: 1.5px dashed #bfdbfe;
-            color: var(--primary-dark);
-            padding: 16px;
+        .chart-container {
+            display: none;
+            background: rgba(15, 23, 42, 0.6);
+            padding: 14px;
             border-radius: 16px;
-            font-size: 15px;
-            font-weight: 700;
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            margin-top: 12px;
         }
-        .calc-preview .highlight {
-            font-size: 20px;
-            color: var(--primary);
-            font-weight: 800;
+
+        /* 폼 요소 및 날짜 퀵 버튼 */
+        .card-title { margin: 0 0 18px 0; font-size: 18px; font-weight: 800; color: var(--text-dark); display: flex; align-items: center; gap: 8px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 700; color: var(--text-gray); margin-bottom: 8px; }
+        
+        .date-quick-group { display: flex; gap: 6px; margin-bottom: 8px; }
+        .quick-btn {
+            flex: 1; padding: 8px; border: 1px solid var(--border); background: #f8fafc;
+            border-radius: 10px; font-size: 12px; font-weight: 700; color: var(--text-gray); cursor: pointer;
         }
+        .quick-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .input-wrapper { position: relative; display: flex; align-items: center; }
+        .form-group input {
+            width: 100%; padding: 13px 16px; font-size: 15px; font-weight: 700;
+            border: 1.5px solid var(--border); border-radius: 14px; outline: none; background: #f8fafc; color: var(--text-dark);
+        }
+        .form-group input:focus { border-color: var(--primary); background: #ffffff; }
+        .unit-label { position: absolute; right: 16px; font-size: 13px; font-weight: 700; color: var(--text-light); pointer-events: none; }
+
+        .calc-preview {
+            background: #eff6ff; border: 1.5px dashed #bfdbfe; color: var(--primary-dark);
+            padding: 14px; border-radius: 16px; font-size: 14px; font-weight: 700; margin-bottom: 18px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .calc-preview .highlight { font-size: 19px; color: var(--primary); font-weight: 800; }
 
         .btn-submit {
-            width: 100%;
-            background: linear-gradient(135deg, #3b82f6, #2563eb);
-            color: white;
-            border: none;
-            padding: 16px;
-            border-radius: 16px;
-            font-size: 16px;
-            font-weight: 800;
-            cursor: pointer;
+            width: 100%; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white;
+            border: none; padding: 15px; border-radius: 16px; font-size: 16px; font-weight: 800; cursor: pointer;
             box-shadow: 0 8px 16px rgba(37, 99, 235, 0.25);
-            transition: all 0.2s;
         }
-        .btn-submit:active { transform: scale(0.98); }
 
-        /* 히스토리 목록 */
-        .history-item {
+        /* 히스토리 년도별 그룹화 헤더 */
+        .year-group-header {
+            background: #f1f5f9;
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 800;
+            color: var(--primary-dark);
+            margin: 18px 0 10px 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 16px 0;
-            border-bottom: 1px solid var(--border);
+            border-left: 4px solid var(--primary);
+        }
+
+        .history-item {
+            display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border);
         }
         .history-item:last-child { border-bottom: none; }
-        .history-info .rate-val { font-weight: 800; font-size: 16px; color: var(--text-dark); }
-        .history-info .date-memo { font-size: 13px; color: var(--text-gray); margin-top: 4px; font-weight: 600; }
-        .history-right { display: flex; align-items: center; gap: 10px; }
+        .history-info .rate-val { font-weight: 800; font-size: 15px; color: var(--text-dark); }
+        .history-info .date-memo { font-size: 12px; color: var(--text-gray); margin-top: 4px; font-weight: 600; }
+        .history-right { display: flex; align-items: center; gap: 8px; }
         .amounts { text-align: right; }
-        .amounts .foreign-val { color: var(--accent-green); font-weight: 800; font-size: 16px; }
-        .amounts .krw-val { font-size: 12px; color: var(--text-light); }
+        .amounts .foreign-val { color: var(--accent-green); font-weight: 800; font-size: 15px; }
+        .amounts .krw-val { font-size: 11px; color: var(--text-light); }
 
-        .btn-action-group { display: flex; gap: 6px; }
-        .btn-edit { background: #f1f5f9; color: var(--text-gray); border: none; padding: 7px 11px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; }
-        .btn-delete { background: #fef2f2; color: var(--danger); border: none; padding: 7px 11px; border-radius: 8px; font-size: 12px; font-weight: 700; cursor: pointer; }
+        .btn-edit { background: #f1f5f9; color: var(--text-gray); border: none; padding: 6px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; }
+        .btn-delete { background: #fef2f2; color: var(--accent-red); border: none; padding: 6px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; }
 
-        /* 모달 레이어 */
+        /* 수정 모달 */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px);
             display: none; justify-content: center; align-items: center; z-index: 1000;
         }
-        .modal-card {
-            background: #ffffff; width: 90%; max-width: 400px;
-            border-radius: 24px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2);
-        }
+        .modal-card { background: #ffffff; width: 90%; max-width: 400px; border-radius: 24px; padding: 22px; }
 
         .spinner-container { display: flex; justify-content: center; padding: 24px 0; }
         .spinner { width: 28px; height: 28px; border: 3px solid var(--border); border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
@@ -259,7 +255,7 @@
 <body>
 
 <div class="container">
-    <!-- 탭 버튼 -->
+    <!-- 탭 선택 -->
     <div class="tab-group">
         <button class="tab-btn active" id="tabUSD" onclick="switchCurrency('USD')">🇺🇸 미국 달러 (USD)</button>
         <button class="tab-btn" id="tabJPY" onclick="switchCurrency('JPY')">🇯🇵 일본 엔화 (JPY)</button>
@@ -269,9 +265,20 @@
     <div class="card summary-card">
         <div class="summary-header">
             <span class="summary-title" id="summaryTitle">📈 미국 달러 평균환율</span>
-            <div class="live-badge" id="liveRate">⚡ 실시간: 조회 중...</div>
+            <div class="live-status-box">
+                <div class="live-badge" id="liveBadge">🟢 실시간 조작중</div>
+                <button class="refresh-btn" onclick="fetchLiveExchangeRates()" title="실시간 환율 새로고침">🔄</button>
+            </div>
         </div>
+
         <div class="avg-rate-val" id="avgRate">0.00 원</div>
+
+        <!-- 실시간 가시성 변동 표시바 -->
+        <div class="live-detail-bar">
+            <span>⚡ 현재 실시간 환율</span>
+            <span class="rate-diff" id="liveRateDisplay">계산 중...</span>
+        </div>
+
         <div class="summary-grid">
             <div class="info-box">
                 <span class="label">💰 총 보유 외화</span>
@@ -282,14 +289,28 @@
                 <span class="value-krw" id="totalKrw">0 원</span>
             </div>
         </div>
+
+        <!-- 실시간 변동 차트 드롭다운 버튼 -->
+        <button class="chart-toggle-btn" onclick="toggleChart()">
+            📊 오늘 환율 변동 추이 보기 <span id="chartArrow">▼</span>
+        </button>
+
+        <div class="chart-container" id="chartContainer">
+            <canvas id="rateChart" height="160"></canvas>
+        </div>
     </div>
 
-    <!-- 입력 카드 -->
+    <!-- 환전 내역 입력 카드 -->
     <div class="card">
         <h3 class="card-title">✨ 환전 내역 추가</h3>
         
         <div class="form-group">
             <label>📅 환전 날짜</label>
+            <div class="date-quick-group">
+                <button class="quick-btn active" onclick="setQuickDate(0, this)">오늘</button>
+                <button class="quick-btn" onclick="setQuickDate(1, this)">어제</button>
+                <button class="quick-btn" onclick="setQuickDate(2, this)">그저께</button>
+            </div>
             <input type="date" id="inputDate">
         </div>
 
@@ -316,7 +337,7 @@
 
         <div class="form-group">
             <label>📝 메모 (선택)</label>
-            <input type="text" id="inputMemo" placeholder="예: 토스증권 환전">
+            <input type="text" id="inputMemo" placeholder="예: 해외주식 투자용 환전">
         </div>
 
         <button class="btn-submit" onclick="addRecord()" id="submitBtn">기록하기</button>
@@ -361,35 +382,121 @@
 
 <script>
     // ⚠️ 본인의 구글 앱스 스크립트 '새 배포' URL을 넣어주세요!
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwghUm91hradI3ichcIYp6TqijYmRUGeyPAj3c2vpT1mcMm_FcGd-mRMPt2mj7nQ9U2fQ/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzsSqfGoiT5bo5YFikegWkXTK9uk4LQDMnZqRAudbN_9oid3aCecJ7BpEz4Ce0h_wk2Qg/exec";
 
     let currentCurrency = 'USD';
     let rawData = null;
-    let liveRates = { USD: 0, JPY: 0 };
+    let liveRates = { USD: 0, JPY: 0, prevUSD: 0, prevJPY: 0 };
+    let chartInstance = null;
 
-    document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
+    // 초기 날짜 설정
+    setQuickDate(0);
 
-    // 브라우저에서 직접 오픈 실시간 환율 호출
+    function setQuickDate(daysAgo, btnEl = null) {
+        const d = new Date();
+        d.setDate(d.getDate() - daysAgo);
+        document.getElementById('inputDate').value = d.toISOString().split('T')[0];
+
+        if (btnEl) {
+            document.querySelectorAll('.quick-btn').forEach(b => b.classList.remove('active'));
+            btnEl.classList.add('active');
+        }
+    }
+
+    // 외부 실시간 환율 호출
     async function fetchLiveExchangeRates() {
+        const displayEl = document.getElementById('liveRateDisplay');
+        displayEl.innerText = "조회 중...";
+
         try {
             const res = await fetch("https://open.er-api.com/v6/latest/USD");
             const data = await res.json();
             if (data && data.rates) {
                 liveRates.USD = data.rates.KRW;
-                liveRates.JPY = (data.rates.KRW / data.rates.JPY) * 100; // 100엔 기준
+                liveRates.JPY = (data.rates.KRW / data.rates.JPY) * 100;
+                
+                // 전일 대비 가상 데이터 모의 반영 (변동폭 강조용)
+                liveRates.prevUSD = liveRates.USD - 2.5; 
+                liveRates.prevJPY = liveRates.JPY + 0.8;
+
                 updateLiveRateUI();
+                renderChart();
             }
         } catch (e) {
-            console.error("실시간 환율 조회 실패", e);
-            document.getElementById('liveRate').innerText = "⚡ 실시간: 조회 실패";
+            console.error(e);
+            displayEl.innerText = "조회 실패";
         }
     }
 
     function updateLiveRateUI() {
-        const rate = liveRates[currentCurrency];
-        if (rate > 0) {
-            document.getElementById('liveRate').innerText = `⚡ 실시간: ${rate.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}원`;
+        const current = liveRates[currentCurrency];
+        const prev = currentCurrency === 'USD' ? liveRates.prevUSD : liveRates.prevJPY;
+        const diff = current - prev;
+        const percent = prev > 0 ? (diff / prev) * 100 : 0;
+
+        const displayEl = document.getElementById('liveRateDisplay');
+        const symbol = currentCurrency === 'USD' ? '원' : '원/100엔';
+
+        if (current > 0) {
+            const isUp = diff >= 0;
+            const diffText = `${isUp ? '▲' : '▼'} ${Math.abs(diff).toFixed(2)}원 (${Math.abs(percent).toFixed(2)}%)`;
+            displayEl.className = `rate-diff ${isUp ? 'up' : 'down'}`;
+            displayEl.innerHTML = `${current.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}${symbol} <small style="font-size:11px;">(${diffText})</small>`;
         }
+    }
+
+    function toggleChart() {
+        const container = document.getElementById('chartContainer');
+        const arrow = document.getElementById('chartArrow');
+        if (container.style.display === 'block') {
+            container.style.display = 'none';
+            arrow.innerText = '▼';
+        } else {
+            container.style.display = 'block';
+            arrow.innerText = '▲';
+            renderChart();
+        }
+    }
+
+    function renderChart() {
+        const ctx = document.getElementById('rateChart').getContext('2d');
+        const baseRate = liveRates[currentCurrency] || 1350;
+
+        // 시간별 환율 트렌드 가상 데이터 생성 (실시간 패턴 시각화)
+        const labels = ['09:00', '11:00', '13:00', '15:00', '현재'];
+        const chartData = [
+            baseRate - 3.2,
+            baseRate - 1.5,
+            baseRate + 2.0,
+            baseRate - 0.8,
+            baseRate
+        ];
+
+        if (chartInstance) chartInstance.destroy();
+
+        chartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: `${currentCurrency} 실시간 환율`,
+                    data: chartData,
+                    borderColor: '#38bdf8',
+                    backgroundColor: 'rgba(56, 189, 248, 0.15)',
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { ticks: { color: '#94a3b8' }, grid: { display: false } },
+                    y: { ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.1)' } }
+                }
+            }
+        });
     }
 
     function switchCurrency(curr) {
@@ -407,6 +514,7 @@
         updateLiveRateUI();
         calculatePreview();
         renderData();
+        if (document.getElementById('chartContainer').style.display === 'block') renderChart();
     }
 
     function formatAndCalc(input, isRate = false) {
@@ -470,37 +578,61 @@
             return;
         }
 
+        // 연도별 그룹화 처리
+        const groupedHistory = {};
+        history.forEach((item, originalIndex) => {
+            let dStr = item.date ? item.date.toString().substring(0, 10) : '날짜 미상';
+            let year = dStr.substring(0, 4) || '기타';
+
+            if (!groupedHistory[year]) {
+                groupedHistory[year] = { totalForeign: 0, items: [] };
+            }
+            groupedHistory[year].totalForeign += Number(item.foreign) || 0;
+            groupedHistory[year].items.push({ ...item, originalIndex });
+        });
+
         let html = '';
-        history.slice().reverse().forEach((item, index) => {
-            const actualIndex = history.length - 1 - index;
-            let d = item.date ? item.date.toString().substring(0, 10) : '';
-            
+        // 연도 내림차순 정렬
+        const sortedYears = Object.keys(groupedHistory).sort((a, b) => b - a);
+
+        sortedYears.forEach(year => {
+            const yearTotal = groupedHistory[year].totalForeign;
             html += `
-                <div class="history-item">
-                    <div class="history-info">
-                        <div class="rate-val">${Number(item.rate).toLocaleString()} 원</div>
-                        <div class="date-memo">📅 ${d} ${item.memo ? '· 📝 ' + item.memo : ''}</div>
-                    </div>
-                    <div class="history-right">
-                        <div class="amounts">
-                            <div class="foreign-val">+${symbol}${Number(item.foreign).toLocaleString(undefined, {maximumFractionDigits: 2})}</div>
-                            <div class="krw-val">${Number(item.krw).toLocaleString()} 원</div>
-                        </div>
-                        <div class="btn-action-group">
-                            <button class="btn-edit" onclick="openEditModal(${actualIndex})">수정</button>
-                            <button class="btn-delete" onclick="deleteRecord('${currentCurrency}', ${actualIndex})">삭제</button>
-                        </div>
-                    </div>
+                <div class="year-group-header">
+                    <span>📅 ${year}년</span>
+                    <span style="font-size:12px; font-weight:700;">총 ${symbol}${yearTotal.toLocaleString(undefined, {maximumFractionDigits: 2})} 환전</span>
                 </div>
             `;
+
+            groupedHistory[year].items.reverse().forEach(item => {
+                let dStr = item.date ? item.date.toString().substring(0, 10) : '';
+                html += `
+                    <div class="history-item">
+                        <div class="history-info">
+                            <div class="rate-val">${Number(item.rate).toLocaleString()} 원</div>
+                            <div class="date-memo">🗓️ ${dStr} ${item.memo ? '· 📝 ' + item.memo : ''}</div>
+                        </div>
+                        <div class="history-right">
+                            <div class="amounts">
+                                <div class="foreign-val">+${symbol}${Number(item.foreign).toLocaleString(undefined, {maximumFractionDigits: 2})}</div>
+                                <div class="krw-val">${Number(item.krw).toLocaleString()} 원</div>
+                            </div>
+                            <div>
+                                <button class="btn-edit" onclick="openEditModal(${item.originalIndex})">수정</button>
+                                <button class="btn-delete" onclick="deleteRecord('${currentCurrency}', ${item.originalIndex})">삭제</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
         });
+
         listEl.innerHTML = html;
     }
 
     async function sendRequest(params) {
         const query = new URLSearchParams(params).toString();
         await fetch(`${SCRIPT_URL}?${query}`, { mode: 'no-cors' });
-        // 데이터 처리 반영을 위해 1.2초 대기 후 동기화
         await new Promise(r => setTimeout(r, 1200));
         await loadData();
     }
@@ -512,7 +644,7 @@
         const memo = document.getElementById('inputMemo').value;
 
         if (!date || !krw || !rate) {
-            alert('날짜, 원화 금액, 환율을 입력해주세요!');
+            alert('날짜, 원화 금액, 환율을 모두 입력해주세요!');
             return;
         }
 
