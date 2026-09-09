@@ -245,11 +245,34 @@
         .chart-container {
             display: none;
             background: #ffffff;
-            padding: 10px;
+            padding: 12px;
             border-radius: 16px;
             margin-top: 12px;
             text-align: center;
         }
+        
+        .chart-time-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 10px;
+            justify-content: center;
+        }
+        .chart-time-btn {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            color: #475569;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .chart-time-btn.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
         .chart-container img {
             width: 100%;
             height: auto;
@@ -395,7 +418,14 @@
         </button>
 
         <div class="chart-container" id="chartContainer">
-            <img id="naverChartImg" src="https://ssl.pstatic.net/imgfinance/chart/marketindex/FX_USDKRW.png" alt="네이버 환율 차트">
+            <div class="chart-time-tabs">
+                <button class="chart-time-btn active" onclick="setChartPeriod('1d', this)">1일 (실시간)</button>
+                <button class="chart-time-btn" onclick="setChartPeriod('1m', this)">1개월</button>
+                <button class="chart-time-btn" onclick="setChartPeriod('3m', this)">3개월</button>
+                <button class="chart-time-btn" onclick="setChartPeriod('1y', this)">1년</button>
+                <button class="chart-time-btn" onclick="setChartPeriod('3y', this)">3년</button>
+            </div>
+            <img id="naverChartImg" src="" alt="네이버 환율 차트">
         </div>
     </div>
 
@@ -546,6 +576,7 @@
     const ADMIN_PW = "tmdgjs18";
 
     let currentCurrency = 'USD';
+    let currentChartPeriod = '1d';
     let rawData = null;
     let liveRates = { USD: 1337.50, JPY: 910.20, prevUSD: 1336.50, prevJPY: 909.70 };
     let activeFilter = 'ALL';
@@ -741,19 +772,46 @@
 
         container.style.display = isHidden ? 'block' : 'none';
         arrow.innerText = isHidden ? '▲' : '▼';
+        if (isHidden) {
+            updateNaverChartImage();
+        }
+    }
+
+    function setChartPeriod(period, btnEl) {
+        currentChartPeriod = period;
+        if (btnEl) {
+            btnEl.parentElement.querySelectorAll('.chart-time-btn').forEach(b => b.classList.remove('active'));
+            btnEl.classList.add('active');
+        }
         updateNaverChartImage();
     }
 
     function updateNaverChartImage() {
         const img = document.getElementById('naverChartImg');
         const code = currentCurrency === 'USD' ? 'FX_USDKRW' : 'FX_JPYKRW';
-        img.src = `https://ssl.pstatic.net/imgfinance/chart/marketindex/${code}.png?t=${Date.now()}`;
+        
+        // 네이버 차트 기간 URL 연결
+        let chartUrl = `https://ssl.pstatic.net/imgfinance/chart/marketindex/${code}.png`;
+        if (currentChartPeriod === '1m') {
+            chartUrl = `https://ssl.pstatic.net/imgfinance/chart/marketindex/area/month/${code}.png`;
+        } else if (currentChartPeriod === '3m') {
+            chartUrl = `https://ssl.pstatic.net/imgfinance/chart/marketindex/area/month3/${code}.png`;
+        } else if (currentChartPeriod === '1y') {
+            chartUrl = `https://ssl.pstatic.net/imgfinance/chart/marketindex/area/year/${code}.png`;
+        } else if (currentChartPeriod === '3y') {
+            chartUrl = `https://ssl.pstatic.net/imgfinance/chart/marketindex/area/year3/${code}.png`;
+        }
+
+        img.src = `${chartUrl}?t=${Date.now()}`;
     }
 
     function switchCurrency(curr) {
         currentCurrency = curr;
         document.getElementById('tabUSD').classList.toggle('active', curr === 'USD');
         document.getElementById('tabJPY').classList.toggle('active', curr === 'JPY');
+        
+        // 목표환율 초기화
+        document.getElementById('targetRateInput').value = '';
         
         if(curr === 'USD') {
             document.getElementById('summaryTitle').innerText = '📈 미국 달러 평균환율';
@@ -847,6 +905,27 @@
         renderData();
     }
 
+    // 통계(평균환율, 보유금액) 자체 즉시 재계산 함수
+    function recalculateSummary(currency) {
+        if (!rawData || !rawData[currency]) return;
+        const history = rawData[currency].history || [];
+        
+        let totalKrw = 0;
+        let totalForeign = 0;
+
+        history.forEach(item => {
+            totalKrw += Number(item.krw) || 0;
+            totalForeign += Number(item.foreign) || 0;
+        });
+
+        let avgRate = 0;
+        if (totalForeign > 0) {
+            avgRate = currency === 'USD' ? (totalKrw / totalForeign) : ((totalKrw / totalForeign) * 100);
+        }
+
+        rawData[currency].summary = { avgRate, totalForeign, totalKrw };
+    }
+
     function renderData() {
         const summary = isDemoMode ? demoData[currentCurrency]?.summary : rawData?.[currentCurrency]?.summary || { avgRate: 0, totalForeign: 0, totalKrw: 0 };
         const history = isDemoMode ? demoData[currentCurrency]?.history : rawData?.[currentCurrency]?.history || [];
@@ -910,15 +989,21 @@
         btn.innerText = '저장 중...';
         btn.disabled = true;
 
+        let foreign = currentCurrency === 'USD' ? (Number(krw) / Number(rate)) : ((Number(krw) / Number(rate)) * 100);
+
         if (isDemoMode) {
-            let foreign = currentCurrency === 'USD' ? (Number(krw) / Number(rate)) : ((Number(krw) / Number(rate)) * 100);
-            demoData[currentCurrency].history.push({
-                date, krw: Number(krw), rate: Number(rate), foreign, memo
-            });
-            loadData();
+            demoData[currentCurrency].history.push({ date, krw: Number(krw), rate: Number(rate), foreign, memo });
+            recalculateSummary(currentCurrency);
+            renderData();
         } else {
-            document.getElementById('historyList').innerHTML = '<div class="spinner-container"><div class="spinner"></div></div>';
-            
+            // 즉시 화면 반영 (Optimistic UI)
+            if (!rawData[currentCurrency]) rawData[currentCurrency] = { summary: {}, history: [] };
+            rawData[currentCurrency].history.push({ date, krw: Number(krw), rate: Number(rate), foreign, memo });
+            recalculateSummary(currentCurrency);
+            renderData();
+            calculateProfitLoss();
+
+            // 구글 시트 백그라운드 동기화
             const params = new URLSearchParams({
                 action: 'add',
                 currency: currentCurrency,
@@ -928,14 +1013,7 @@
                 memo: memo
             });
 
-            try {
-                await fetch(`${SCRIPT_URL}?${params.toString()}`, { mode: 'no-cors' });
-            } catch(e) {
-                console.error("저장 통신 오류", e);
-            }
-            
-            await new Promise(r => setTimeout(r, 2500));
-            await loadData();
+            fetch(`${SCRIPT_URL}?${params.toString()}`, { mode: 'no-cors' }).catch(e => console.error(e));
         }
 
         document.getElementById('inputKrw').value = '';
@@ -974,13 +1052,20 @@
         }
 
         closeModal('editModal');
-        document.getElementById('historyList').innerHTML = '<div class="spinner-container"><div class="spinner"></div></div>';
+        let foreign = currentCurrency === 'USD' ? (Number(krw) / Number(rate)) : ((Number(krw) / Number(rate)) * 100);
 
         if (isDemoMode) {
-            let foreign = currentCurrency === 'USD' ? (Number(krw) / Number(rate)) : ((Number(krw) / Number(rate)) * 100);
             demoData[currentCurrency].history[index] = { date, krw: Number(krw), rate: Number(rate), foreign, memo };
-            loadData();
+            recalculateSummary(currentCurrency);
+            renderData();
         } else {
+            // 즉시 화면 반영 (Optimistic UI)
+            rawData[currentCurrency].history[index] = { date, krw: Number(krw), rate: Number(rate), foreign, memo };
+            recalculateSummary(currentCurrency);
+            renderData();
+            calculateProfitLoss();
+
+            // 구글 시트 백그라운드 동기화
             const params = new URLSearchParams({
                 action: 'edit',
                 currency: currentCurrency,
@@ -991,33 +1076,32 @@
                 memo: memo
             });
 
-            try {
-                await fetch(`${SCRIPT_URL}?${params.toString()}`, { mode: 'no-cors' });
-            } catch(e) {
-                console.error("수정 통신 오류", e);
-            }
-
-            await new Promise(r => setTimeout(r, 2500));
-            await loadData();
+            fetch(`${SCRIPT_URL}?${params.toString()}`, { mode: 'no-cors' }).catch(e => console.error(e));
         }
     }
 
     async function deleteRecord(currency, index) {
         if (!confirm('정말 삭제하시겠습니까?')) return;
-        document.getElementById('historyList').innerHTML = '<div class="spinner-container"><div class="spinner"></div></div>';
         
         if (isDemoMode) {
             demoData[currency].history.splice(index, 1);
-            loadData();
+            recalculateSummary(currency);
+            renderData();
         } else {
+            // 즉시 화면 반영 (Optimistic UI)
+            rawData[currency].history.splice(index, 1);
+            recalculateSummary(currency);
+            renderData();
+            calculateProfitLoss();
+
+            // 구글 시트 백그라운드 동기화
             const params = new URLSearchParams({
                 action: 'delete',
                 currency: currency,
                 index: index
             });
-            await fetch(`${SCRIPT_URL}?${params.toString()}`, { mode: 'no-cors' });
-            await new Promise(r => setTimeout(r, 2500));
-            await loadData();
+
+            fetch(`${SCRIPT_URL}?${params.toString()}`, { mode: 'no-cors' }).catch(e => console.error(e));
         }
     }
 
