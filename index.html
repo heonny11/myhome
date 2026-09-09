@@ -8,9 +8,6 @@
     <meta name="apple-mobile-web-app-title" content="환율 계산기">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔀</text></svg>">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💵</text></svg>">
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -393,7 +390,8 @@
         </button>
 
         <div class="chart-container" id="chartContainer">
-            <div style="position: relative; height: 190px; width: 100%;">
+            <div id="noChartMsg" style="display:none; color:#94a3b8; text-align:center; padding-top:80px; font-size:13px; font-weight:700;">기록된 내역이 없어 차트를 표시할 수 없습니다.</div>
+            <div id="canvasWrapper" style="position: relative; height: 190px; width: 100%;">
                 <canvas id="rateChart"></canvas>
             </div>
         </div>
@@ -511,7 +509,8 @@
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxLzHYUcjhIvLYiM3n5GSrduGJxP6JmMJU38_ShYA5-8asYXSfoCAlehnBQ2YquxKej7Q/exec";
+    // 요청해주신 최신 앱스 스크립트 URL 반영 완료
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxEREALadLLhplFSAmy9tRyab7sD5KNupwMN6aIe9dEJFl5_zNOqXi_uonHwh2dfrJShA/exec";
 
     const ADMIN_ID = "dldrjdwkd";
     const ADMIN_PW = "tmdgjs18";
@@ -526,19 +525,9 @@
     let isDemoMode = false;
     let isAdmin = false;
 
-    let demoData = JSON.parse(localStorage.getItem('demoData')) || {
-        USD: {
-            summary: { avgRate: 1350.50, totalForeign: 500, totalKrw: 675250 },
-            history: [
-                { date: '2025-09-01', krw: 675250, rate: 1350.50, foreign: 500, memo: '📈 주식투자' }
-            ]
-        },
-        JPY: {
-            summary: { avgRate: 910.00, totalForeign: 50000, totalKrw: 455000 },
-            history: [
-                { date: '2026-03-05', krw: 455000, rate: 910.00, foreign: 50000, memo: '✈️ 해외여행' }
-            ]
-        }
+    let demoData = {
+        USD: { summary: { avgRate: 0, totalForeign: 0, totalKrw: 0 }, history: [] },
+        JPY: { summary: { avgRate: 0, totalForeign: 0, totalKrw: 0 }, history: [] }
     };
 
     setQuickDate(0);
@@ -733,6 +722,8 @@
     }
 
     function renderChart() {
+        const canvasWrapper = document.getElementById('canvasWrapper');
+        const noChartMsg = document.getElementById('noChartMsg');
         const canvas = document.getElementById('rateChart');
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
@@ -741,8 +732,13 @@
         
         if (!activeData || !activeData.history || activeData.history.length === 0) {
             if (chartInstance) chartInstance.destroy();
+            canvasWrapper.style.display = 'none';
+            noChartMsg.style.display = 'block';
             return;
         }
+
+        canvasWrapper.style.display = 'block';
+        noChartMsg.style.display = 'none';
 
         let historyList = [...activeData.history].sort((a, b) => new Date(a.date) - new Date(b.date));
 
@@ -948,15 +944,28 @@
             demoData[currentCurrency].history.push({
                 date, krw: Number(krw), rate: Number(rate), foreign, memo
             });
-            localStorage.setItem('demoData', JSON.stringify(demoData));
             loadData();
         } else {
             document.getElementById('historyList').innerHTML = '<div class="spinner-container"><div class="spinner"></div></div>';
             
-            await fetch(`${SCRIPT_URL}?action=add&currency=${currentCurrency}&date=${date}&krw=${krw}&rate=${rate}&memo=${encodeURIComponent(memo)}`, { mode: 'no-cors' });
+            // 통신 안전성 강화를 위해 URLSearchParams 방식으로 변경
+            const params = new URLSearchParams({
+                action: 'add',
+                currency: currentCurrency,
+                date: date,
+                krw: krw,
+                rate: rate,
+                memo: memo
+            });
+
+            try {
+                await fetch(`${SCRIPT_URL}?${params.toString()}`, { mode: 'no-cors' });
+            } catch(e) {
+                console.error("저장 통신 중 오류 발생", e);
+            }
             
-            // 시트 데이터 반영 동기화 대기 시간 (2.5초)
-            await new Promise(r => setTimeout(r, 2500));
+            // 시트 저장 대기 시간 (3초)
+            await new Promise(r => setTimeout(r, 3000));
             await loadData();
         }
 
@@ -975,11 +984,15 @@
         
         if (isDemoMode) {
             demoData[currency].history.splice(index, 1);
-            localStorage.setItem('demoData', JSON.stringify(demoData));
             loadData();
         } else {
-            await fetch(`${SCRIPT_URL}?action=delete&currency=${currency}&index=${index}`, { mode: 'no-cors' });
-            await new Promise(r => setTimeout(r, 2500));
+            const params = new URLSearchParams({
+                action: 'delete',
+                currency: currency,
+                index: index
+            });
+            await fetch(`${SCRIPT_URL}?${params.toString()}`, { mode: 'no-cors' });
+            await new Promise(r => setTimeout(r, 3000));
             await loadData();
         }
     }
