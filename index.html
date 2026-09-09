@@ -23,9 +23,7 @@
       --accent-green: #10b981;
       
       --buy-color: #ef4444;
-      --buy-hover: #dc2626;
       --sell-color: #3b82f6;
-      --sell-hover: #2563eb;
       
       --shadow-dark: 0 15px 35px -5px rgba(0, 0, 0, 0.75), 0 5px 15px -3px rgba(0, 0, 0, 0.5);
       --glow-usd: 0 0 30px rgba(56, 189, 248, 0.15);
@@ -62,12 +60,6 @@
       border-bottom: 2px solid var(--card-border);
       flex-wrap: wrap;
       gap: 16px;
-    }
-
-    .brand-title {
-      display: flex;
-      align-items: center;
-      gap: 12px;
     }
 
     .brand-title h1 {
@@ -127,7 +119,7 @@
       border-color: var(--text-muted);
     }
 
-    /* 입체감 있는 상단 요약 카드 (Dark Glassmorphism) */
+    /* 입체감 있는 상단 요약 카드 */
     .summary-card {
       background: linear-gradient(145deg, #182234, #0f1523);
       border: 1px solid rgba(255, 255, 255, 0.1);
@@ -208,7 +200,7 @@
       font-weight: 600;
     }
 
-    /* 메인 그리드 레이아웃 (USD / JPY 섹션) */
+    /* 메인 그리드 레이아웃 (USD / JPY) */
     .main-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -285,9 +277,6 @@
       font-size: 0.85rem;
       font-weight: 700;
       color: var(--text-muted);
-      display: flex;
-      align-items: center;
-      gap: 6px;
     }
 
     .input-wrapper input {
@@ -319,7 +308,7 @@
       color: var(--accent-gold) !important;
     }
 
-    /* 입체감 있는 버튼 스타일 */
+    /* 버튼 스타일 */
     .btn-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -351,16 +340,12 @@
       color: white;
     }
 
-    .btn-buy:hover { background: linear-gradient(135deg, #f87171 0%, #dc2626 100%); }
-
     .btn-sell {
       background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
       color: white;
     }
 
-    .btn-sell:hover { background: linear-gradient(135deg, #60a5fa 0%, #2563eb 100%); }
-
-    /* 필터 및 검색 컨트롤 영역 */
+    /* 필터 및 검색 */
     .table-controls {
       display: flex;
       justify-content: space-between;
@@ -397,11 +382,6 @@
       opacity: 0.6;
     }
 
-    .filter-group {
-      display: flex;
-      gap: 8px;
-    }
-
     .filter-select {
       background: #080c14;
       border: 1px solid var(--card-border);
@@ -413,7 +393,7 @@
       cursor: pointer;
     }
 
-    /* 시인성 최상 매매 기록 테이블 */
+    /* 테이블 */
     .table-container {
       margin-top: 8px;
       overflow-x: auto;
@@ -489,6 +469,11 @@
       transform: scale(1.1);
     }
 
+    .btn-del:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
     .empty-msg {
       text-align: center !important;
       color: var(--text-sub);
@@ -496,7 +481,7 @@
       font-weight: 600;
     }
 
-    /* 토스트 알림 모달 */
+    /* 토스트 알림 */
     .toast {
       position: fixed;
       bottom: 24px;
@@ -541,11 +526,11 @@
     </div>
   </header>
 
-  <!-- 상단 대형 입체 요약 카드 -->
+  <!-- 상단 통합 자산 요약 카드 -->
   <div class="summary-card">
     <div class="summary-header">
       <div class="summary-title">📊 전체 통합 자산 요약 현황</div>
-      <span style="font-size: 0.85rem; color: var(--text-sub); font-weight: 600;">* 이동평균법 적용 관리</span>
+      <span style="font-size: 0.85rem; color: var(--text-sub); font-weight: 600;">* 이동평균법 자동 적용</span>
     </div>
     <div class="summary-grid">
       <div class="stat-box">
@@ -571,7 +556,7 @@
     </div>
   </div>
 
-  <!-- 메인 입출력 및 내역 섹션 (USD & JPY) -->
+  <!-- 메인 입출력 및 내역 섹션 -->
   <div class="main-grid">
     
     <!-- USD 섹션 -->
@@ -613,7 +598,7 @@
         <div class="search-box">
           <input type="text" id="usd-search" placeholder="날짜 검색..." oninput="filterRecords('USD')">
         </div>
-        <div class="filter-group">
+        <div>
           <select id="usd-filter-type" class="filter-select" onchange="filterRecords('USD')">
             <option value="ALL">전체 보기</option>
             <option value="매수">매수만</option>
@@ -681,7 +666,7 @@
         <div class="search-box">
           <input type="text" id="jpy-search" placeholder="날짜 검색..." oninput="filterRecords('JPY')">
         </div>
-        <div class="filter-group">
+        <div>
           <select id="jpy-filter-type" class="filter-select" onchange="filterRecords('JPY')">
             <option value="ALL">전체 보기</option>
             <option value="매수">매수만</option>
@@ -717,34 +702,30 @@
 <div class="toast" id="toast">🔔 처리되었습니다.</div>
 
 <script>
-  // 🎯 구글 스프레드시트 웹앱 API 주소 고정 (URL 입력 없이 자동 연결)
-  const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxEREALadLLhplFSAmy9tRyab7sD5KNupwMN6aIe9dEJFl5_zNOqXi_uonHwh2dfrJShA/exec';
+  // 🎯 구글 스프레드시트 웹앱 API 주소 고정
+  const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxrV91wYsb1Nmk6H0tMxIima1KZn1OKm3kYqX_iXPkgywgjAryFwR9tUb7q1XuXJfG5VA/exec';
   
   let store = {
     USD: [],
     JPY: []
   };
 
-  // 초기화 함수
+  let isDeleting = false; // 중복 삭제 방지 플래그
+
   window.onload = function() {
-    // 오늘 날짜 기본 입력
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('usd-date').value = today;
     document.getElementById('jpy-date').value = today;
 
-    // 실시간 자동 원화 정산액 계산 바인딩
     setupAutoCalc('usd');
     setupAutoCalc('jpy');
 
-    // 엔터키 키보드 단축키 추가
     setupEnterKey('usd');
     setupEnterKey('jpy');
 
-    // 구글 시트 데이터 자동 불러오기
     fetchData();
   };
 
-  // 실시간 원화 정산액 계산 함수
   function setupAutoCalc(type) {
     const rateInput = document.getElementById(`${type}-rate`);
     const foreignInput = document.getElementById(`${type}-foreign`);
@@ -757,7 +738,6 @@
       if (type === 'usd') {
         krwInput.value = Math.round(rate * foreign);
       } else {
-        // JPY 100엔 환율 적용 계산
         krwInput.value = Math.round((rate / 100) * foreign);
       }
     }
@@ -766,7 +746,6 @@
     foreignInput.addEventListener('input', calc);
   }
 
-  // 엔터키 누름 처리
   function setupEnterKey(type) {
     const currency = type.toUpperCase();
     ['rate', 'foreign'].forEach(field => {
@@ -778,7 +757,6 @@
     });
   }
 
-  // 토스트 메시지 표출
   function showToast(msg) {
     const toast = document.getElementById('toast');
     toast.innerText = msg;
@@ -788,7 +766,6 @@
     }, 3000);
   }
 
-  // 구글 시트 데이터 수신 (GET)
   async function fetchData() {
     updateStatus('● 동기화 중...', '#fbbf24');
 
@@ -801,15 +778,13 @@
 
       renderUI();
       updateStatus('● 동기화 완료', '#10b981');
-      showToast('구글 시트 데이터 동기화 완료!');
     } catch (err) {
       console.error("데이터 동기화 실패:", err);
       updateStatus('● 구글 시트 연동 에러', '#ef4444');
-      showToast('⚠️ 구글 시트 연동 실패');
+      showToast('⚠️ 구글 시트 데이터 불러오기 실패');
     }
   }
 
-  // 데이터 추가 및 저장 (POST)
   async function addRecord(currency, type) {
     const prefix = currency.toLowerCase();
     const date = document.getElementById(`${prefix}-date`).value;
@@ -818,12 +793,12 @@
     const krw = parseFloat(document.getElementById(`${prefix}-krw`).value);
 
     if (!date || isNaN(rate) || isNaN(foreign) || foreign <= 0) {
-      alert('거래 일자, 환율, 거래 외화 금액을 바르게 입력해 주세요!');
+      alert('거래 일자, 환율, 거래 외화 금액을 정확하게 입력해 주세요!');
       return;
     }
 
     const newRecord = {
-      id: Date.now().toString(),
+      id: String(Date.now()),
       date,
       type,
       rate,
@@ -831,18 +806,13 @@
       krw
     };
 
-    // 로컬 스토리지 및 화면 즉시 반영
     store[currency].unshift(newRecord);
     renderUI();
 
-    // 입력 필드 초기화
     document.getElementById(`${prefix}-foreign`).value = '';
     document.getElementById(`${prefix}-krw`).value = '';
 
-    showToast(`🔴 ${currency} ${type} 내역 등록 중...`);
-
-    // 백엔드 저장
-    updateStatus('● 저장 중...', '#fbbf24');
+    updateStatus('● 동기화 중...', '#fbbf24');
     try {
       await fetch(WEB_APP_URL, {
         method: 'POST',
@@ -854,45 +824,56 @@
           tradeData: JSON.stringify(newRecord)
         })
       });
-      updateStatus('● 저장 완료', '#10b981');
-      showToast(`✅ ${currency} ${type} 내역이 구글 시트에 저장되었습니다.`);
+      updateStatus('● 동기화 완료', '#10b981');
+      showToast(`✅ ${currency} ${type} 내역 저장 완료`);
     } catch (e) {
       console.error("저장 실패:", e);
       updateStatus('● 저장 실패', '#ef4444');
     }
   }
 
-  // 삭제 처리
+  // 🎯 완벽 수정된 비동기 삭제 함수
   async function deleteRecord(currency, id) {
+    if (isDeleting) return;
     if (!confirm('해당 매매 내역을 정말 삭제하시겠습니까?')) return;
 
-    store[currency] = store[currency].filter(item => item.id !== id);
+    isDeleting = true;
+    updateStatus('● 시트 데이터 삭제 중...', '#fbbf24');
+
+    // 1. 프론트엔드 메모리에서 먼저 삭제 후 UI 즉시 갱신
+    store[currency] = store[currency].filter(item => String(item.id) !== String(id));
     renderUI();
 
-    updateStatus('● 삭제 중...', '#fbbf24');
+    // 2. 백엔드(구글 시트) 데이터 삭제 요청
     try {
       await fetch(WEB_APP_URL, {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'delete', id: id, currency: currency })
+        body: JSON.stringify({
+          action: 'delete',
+          currency: currency,
+          id: String(id)
+        })
       });
+      
       updateStatus('● 삭제 완료', '#10b981');
-      showToast('🗑️ 내역 삭제가 완료되었습니다.');
+      showToast('🗑️ 구글 시트 내역 삭제 완료!');
     } catch (e) {
       console.error("삭제 실패:", e);
       updateStatus('● 삭제 실패', '#ef4444');
+      showToast('❌ 삭제 실패. 다시 시도해 주세요.');
+    } finally {
+      isDeleting = false;
     }
   }
 
-  // 화면 전체 UI 렌더링
   function renderUI() {
     renderTable('USD');
     renderTable('JPY');
     calcSummary();
   }
 
-  // 테이블 개별 렌더링 (검색 및 필터링 반영)
   function renderTable(currency) {
     const prefix = currency.toLowerCase();
     const tbody = document.getElementById(`${prefix}-table-body`);
@@ -918,53 +899,50 @@
       tr.innerHTML = `
         <td><span class="${isBuy ? 'badge-buy' : 'badge-sell'}">${item.type}</span></td>
         <td>${item.date}</td>
-        <td>${item.rate.toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 2})}</td>
-        <td>${item.foreign.toLocaleString(undefined, {maximumFractionDigits: 2})}</td>
-        <td>${item.krw.toLocaleString()}</td>
+        <td>${Number(item.rate).toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 2})}</td>
+        <td>${Number(item.foreign).toLocaleString(undefined, {maximumFractionDigits: 2})}</td>
+        <td>${Number(item.krw).toLocaleString()}</td>
         <td><button class="btn-del" onclick="deleteRecord('${currency}', '${item.id}')">✕</button></td>
       `;
       tbody.appendChild(tr);
     });
   }
 
-  // 검색/필터 적용 시 호출
   function filterRecords(currency) {
     renderTable(currency);
   }
 
-  // 이동평균법 기준 잔여 보유량 및 평균 매수단가 계산
   function calcSummary() {
-    // 1. USD 이동평균법 계산
+    // 1. USD 이동평균법
     let usdTotalAmt = 0, usdTotalKrw = 0;
     store.USD.slice().reverse().forEach(item => {
       if (item.type === '매수') {
-        usdTotalAmt += item.foreign;
-        usdTotalKrw += item.krw;
+        usdTotalAmt += Number(item.foreign);
+        usdTotalKrw += Number(item.krw);
       } else if (item.type === '매도') {
         if (usdTotalAmt > 0) {
           const avgRate = usdTotalKrw / usdTotalAmt;
-          usdTotalAmt = Math.max(0, usdTotalAmt - item.foreign);
-          usdTotalKrw = Math.max(0, usdTotalKrw - (item.foreign * avgRate));
+          usdTotalAmt = Math.max(0, usdTotalAmt - Number(item.foreign));
+          usdTotalKrw = Math.max(0, usdTotalKrw - (Number(item.foreign) * avgRate));
         }
       }
     });
 
-    // 2. JPY 이동평균법 계산
+    // 2. JPY 이동평균법
     let jpyTotalAmt = 0, jpyTotalKrw = 0;
     store.JPY.slice().reverse().forEach(item => {
       if (item.type === '매수') {
-        jpyTotalAmt += item.foreign;
-        jpyTotalKrw += item.krw;
+        jpyTotalAmt += Number(item.foreign);
+        jpyTotalKrw += Number(item.krw);
       } else if (item.type === '매도') {
         if (jpyTotalAmt > 0) {
           const avgRate = jpyTotalKrw / jpyTotalAmt;
-          jpyTotalAmt = Math.max(0, jpyTotalAmt - item.foreign);
-          jpyTotalKrw = Math.max(0, jpyTotalKrw - (item.foreign * avgRate));
+          jpyTotalAmt = Math.max(0, jpyTotalAmt - Number(item.foreign));
+          jpyTotalKrw = Math.max(0, jpyTotalKrw - (Number(item.foreign) * avgRate));
         }
       }
     });
 
-    // 화면 반영 (소수점 처리 완벽)
     document.getElementById('sum-usd-amount').innerText = `$${usdTotalAmt.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
     const usdAvg = usdTotalAmt > 0 ? (usdTotalKrw / usdTotalAmt) : 0;
     document.getElementById('sum-usd-avg').innerText = `₩${usdAvg.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
@@ -976,7 +954,6 @@
     document.getElementById('sum-jpy-krw-val').innerText = `원화 평가액: ₩${Math.round(jpyTotalKrw).toLocaleString()}`;
   }
 
-  // CSV 데이터 내보내기 기능
   function exportCSV() {
     let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
     csvContent += "통화,구분,날짜,환율,외화금액,원화금액\n";
@@ -996,7 +973,6 @@
     document.body.removeChild(link);
   }
 
-  // 동기화 상태 표시 헬퍼
   function updateStatus(msg, color) {
     const dot = document.getElementById('sync-dot');
     dot.style.backgroundColor = color;
