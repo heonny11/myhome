@@ -251,10 +251,12 @@
 
         .chart-container {
             display: none;
-            background: rgba(15, 23, 42, 0.8);
+            background: rgba(15, 23, 42, 0.9);
             padding: 14px;
             border-radius: 16px;
             margin-top: 12px;
+            position: relative;
+            height: 220px;
         }
 
         .chart-period-group {
@@ -433,7 +435,9 @@
                 <button class="chart-period-btn" onclick="changeChartPeriod('5Y', this)">5년</button>
                 <button class="chart-period-btn" onclick="changeChartPeriod('10Y', this)">10년</button>
             </div>
-            <canvas id="rateChart" height="175"></canvas>
+            <div style="position: relative; height: 155px; width: 100%;">
+                <canvas id="rateChart"></canvas>
+            </div>
         </div>
     </div>
 
@@ -664,7 +668,6 @@
 
     function setMemoTag(tag) { document.getElementById('inputMemo').value = tag; }
 
-    // 1. 실시간 네이버 환율 호출 및 처리
     async function fetchLiveExchangeRates() {
         const displayEl = document.getElementById('liveRateDisplay');
         displayEl.innerText = "네이버 실시간 시세 동기화 중...";
@@ -780,7 +783,7 @@
         } else {
             container.style.display = 'block';
             arrow.innerText = '▲';
-            renderChart();
+            setTimeout(() => renderChart(), 50);
         }
     }
 
@@ -793,23 +796,21 @@
         renderChart();
     }
 
-    // 2. [버그 픽스] 히스토리 전체 데이터를 연동하여 기간별 차트 출력
+    // [최종 수정] 차트 렌더링 예외 처리 및 반응형 Canvas 안전 로직 적용
     function renderChart() {
-        const ctx = document.getElementById('rateChart')?.getContext('2d');
-        if (!ctx) return;
+        const canvas = document.getElementById('rateChart');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
 
         const activeData = isDemoMode ? demoData[currentCurrency] : (rawData ? rawData[currentCurrency] : null);
         
-        // 데이터가 없거나 히스토리가 없는 경우 예외 처리
         if (!activeData || !activeData.history || activeData.history.length === 0) {
             if (chartInstance) chartInstance.destroy();
             return;
         }
 
-        // 1) 히스토리를 날짜순(과거 -> 최근)으로 정렬
         let historyList = [...activeData.history].sort((a, b) => new Date(a.date) - new Date(b.date));
 
-        // 2) 기간별 필터링
         if (currentPeriod !== '10Y') {
             const now = new Date();
             let cutoffDate = new Date();
@@ -832,34 +833,36 @@
             }
         }
 
-        // 3) 차트용 라벨 및 값 추출
-        const labels = historyList.map(item => item.date ? item.date.toString().substring(0, 10) : '');
+        const labels = historyList.map(item => {
+            if(!item.date) return '';
+            const d = new Date(item.date);
+            return isNaN(d.getTime()) ? item.date.toString().substring(0, 10) : d.toISOString().split('T')[0];
+        });
         const chartData = historyList.map(item => Number(item.rate));
 
-        if (chartInstance) chartInstance.destroy();
+        if (chartInstance) {
+            chartInstance.destroy();
+        }
 
         chartInstance = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: labels,
                 datasets: [{
-                    label: `${currentCurrency} 적용 환율`,
+                    label: `${currentCurrency} 환율`,
                     data: chartData,
                     borderColor: '#38bdf8',
-                    borderWidth: 2.5,
+                    borderWidth: 2,
                     backgroundColor: 'rgba(56, 189, 248, 0.15)',
                     fill: true,
                     tension: 0.2,
                     pointRadius: 4,
-                    pointHoverRadius: 7,
-                    pointBackgroundColor: '#ffffff',
-                    pointHoverBackgroundColor: '#38bdf8'
+                    pointBackgroundColor: '#ffffff'
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                interaction: { mode: 'index', intersect: false },
                 plugins: { legend: { display: false } },
                 scales: {
                     x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { display: false } },
@@ -1020,10 +1023,12 @@
         listEl.innerHTML = html;
     }
 
+    // [최종 수정] 백엔드 요청 동기화 강화
     async function sendRequest(params) {
         const query = new URLSearchParams(params).toString();
         await fetch(`${SCRIPT_URL}?${query}`, { mode: 'no-cors' });
-        await new Promise(r => setTimeout(r, 1200));
+        // 구글 시트 저장 처리가 완전히 완료되도록 대기 시간을 보장합니다.
+        await new Promise(r => setTimeout(r, 1800));
         await loadData();
     }
 
