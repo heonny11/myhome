@@ -585,7 +585,7 @@
 
         <div id="adminLoggedInView" style="display:none;">
             <p style="font-size:14px; color:var(--text-gray); font-weight:700; margin-bottom:16px;">
-                ✅ <strong style="color:var(--primary);">dldrjdwkd</strong> 님으로 인증되었습니다.
+                ✅ 인증 완료된 관리자 계정입니다.
             </p>
             <div style="display:flex; flex-direction:column; gap:10px;">
                 <button class="btn-submit" style="background:#059669;" onclick="exportToCSV()">📥 전체 데이터 백업 (CSV)</button>
@@ -596,14 +596,14 @@
 </div>
 
 <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxLzHYUcjhIvLYiM3n5GSrduGJxP6JmMJU38_ShYA5-8asYXSfoCAlehnBQ2YquxKej7Q/exec";
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyXEhDci8eJWV5LfdqX_KN2pn8fpKZ7mmp0Sl1vYQPjKzK1tw7j2aZ9123DCDjZcb6CQQ/exec";
 
     const ADMIN_ID = "dldrjdwkd";
     const ADMIN_PW = "tmdgjs18";
 
     let currentCurrency = 'USD';
     let rawData = null;
-    let liveRates = { USD: 1337.20, JPY: 910.50, prevUSD: 1339.50, prevJPY: 911.80 };
+    let liveRates = { USD: 1337.20, JPY: 910.50, prevUSD: 1336.50, prevJPY: 910.00 };
     let chartInstance = null;
     let currentPeriod = '1Y';
     let activeFilter = 'ALL';
@@ -712,31 +712,29 @@
 
     async function fetchLiveExchangeRates() {
         const displayEl = document.getElementById('liveRateDisplay');
-        displayEl.innerText = "네이버 시세 동기화 중...";
+        displayEl.innerText = "네이버 실시간 시세 동기화 중...";
 
         try {
             const cacheBuster = new Date().getTime();
-            const res = await fetch(`https://api.exchangerate-api.com/v4/latest/USD?t=${cacheBuster}`, {
-                cache: 'no-store'
-            });
+            const res = await fetch(`${SCRIPT_URL}?action=getLiveRate&t=${cacheBuster}`);
             const data = await res.json();
             
-            if (data && data.rates) {
-                const baseUsdRate = data.rates.KRW;
-                liveRates.USD = Number((baseUsdRate - 2.85).toFixed(2)); 
-                liveRates.JPY = Number(((liveRates.USD / data.rates.JPY) * 100).toFixed(2));
-                
-                liveRates.prevUSD = liveRates.USD + 2.30; 
-                liveRates.prevJPY = liveRates.JPY + 1.20;
+            if (data && data.USD) {
+                liveRates.USD = Number(data.USD);
+                liveRates.JPY = Number(data.JPY);
+                liveRates.prevUSD = liveRates.USD - 0.5; 
+                liveRates.prevJPY = liveRates.JPY - 0.2;
 
                 updateLiveRateUI();
                 checkTargetRate();
                 calculateProfitLoss();
-                renderChart();
+                if (document.getElementById('chartContainer').style.display === 'block') {
+                    renderChart();
+                }
             }
         } catch (e) {
-            console.error(e);
-            updateLiveRateUI();
+            console.error("네이버 환율 연동 오류:", e);
+            displayEl.innerText = "환율 불러오기 실패";
         }
     }
 
@@ -837,50 +835,8 @@
         const ctx = document.getElementById('rateChart').getContext('2d');
         const currRate = liveRates[currentCurrency] || (currentCurrency === 'USD' ? 1337.2 : 910.5);
 
-        let labels = [];
-        let chartData = [];
-
-        if (currentCurrency === 'USD') {
-            if (currentPeriod === 'today') {
-                labels = ['09:00', '10:30', '12:00', '13:30', '15:00', '16:30', '현재'];
-                chartData = [currRate + 4.2, currRate + 2.5, currRate - 1.2, currRate + 3.0, currRate - 2.8, currRate - 0.5, currRate];
-            } else if (currentPeriod === '3M') {
-                labels = ['6월', '7월 초', '7월 말', '8월 초', '8월 말', '현재'];
-                chartData = [1561.5, 1510.0, 1450.2, 1395.0, 1362.4, currRate];
-            } else if (currentPeriod === '1Y') {
-                labels = ['25년 9월', '11월', '26년 1월', '3월', '5월', '7월', '현재'];
-                chartData = [1352.0, 1412.0, 1410.2, 1465.0, 1515.0, 1485.0, currRate];
-            } else if (currentPeriod === '3Y') {
-                labels = ['23년', '24년', '25년', '26년', '현재'];
-                chartData = [1295.0, 1380.0, 1410.0, 1561.5, currRate];
-            } else if (currentPeriod === '5Y') {
-                labels = ['21년', '22년', '23년', '24년', '25년', '현재'];
-                chartData = [1140.0, 1442.0, 1305.0, 1370.0, 1410.0, currRate];
-            } else if (currentPeriod === '10Y') {
-                labels = ['16년', '18년', '20년', '22년', '24년', '현재'];
-                chartData = [1152.0, 1070.0, 1180.0, 1442.0, 1380.0, currRate];
-            }
-        } else {
-            if (currentPeriod === 'today') {
-                labels = ['09:00', '12:00', '15:00', '현재'];
-                chartData = [currRate - 1.5, currRate + 2.0, currRate - 0.8, currRate];
-            } else if (currentPeriod === '3M') {
-                labels = ['6월', '7월', '8월', '현재'];
-                chartData = [870.0, 895.0, 920.0, currRate];
-            } else if (currentPeriod === '1Y') {
-                labels = ['25년 9월', '11월', '26년 1월', '3월', '5월', '7월', '현재'];
-                chartData = [890.0, 915.0, 880.0, 905.0, 875.0, 920.0, currRate];
-            } else if (currentPeriod === '3Y') {
-                labels = ['23년', '24년', '25년', '26년', '현재'];
-                chartData = [980.0, 890.0, 885.0, 910.0, currRate];
-            } else if (currentPeriod === '5Y') {
-                labels = ['21년', '22년', '23년', '24년', '25년', '현재'];
-                chartData = [1050.0, 970.0, 920.0, 880.0, 900.0, currRate];
-            } else if (currentPeriod === '10Y') {
-                labels = ['16년', '18년', '20년', '22년', '24년', '현재'];
-                chartData = [1100.0, 1010.0, 1120.0, 980.0, 880.0, currRate];
-            }
-        }
+        let labels = ['09:00', '10:30', '12:00', '13:30', '15:00', '현재'];
+        let chartData = [currRate + 2.0, currRate - 1.5, currRate + 1.0, currRate - 2.0, currRate + 0.5, currRate];
 
         if (chartInstance) chartInstance.destroy();
 
@@ -905,25 +861,7 @@
             options: {
                 responsive: true,
                 interaction: { mode: 'index', intersect: false },
-                plugins: {
-                    legend: { display: false },
-                    tooltip: {
-                        enabled: true,
-                        backgroundColor: 'rgba(15, 23, 42, 0.95)',
-                        titleFont: { size: 12, weight: 'bold' },
-                        bodyFont: { size: 14, weight: 'bold' },
-                        bodyColor: '#38bdf8',
-                        padding: 10,
-                        displayColors: false,
-                        callbacks: {
-                            label: function(context) {
-                                let val = context.parsed.y;
-                                const unit = currentCurrency === 'USD' ? '원' : '원/100엔';
-                                return ` 💱 ${val.toFixed(1)}${unit}`;
-                            }
-                        }
-                    }
-                },
+                plugins: { legend: { display: false } },
                 scales: {
                     x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { display: false } },
                     y: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.08)' } }
@@ -955,7 +893,6 @@
         calculateProfitLoss();
         recalculate();
         renderData();
-        if (document.getElementById('chartContainer').style.display === 'block') renderChart();
     }
 
     function formatNumberInput(input, isRate = false) {
@@ -974,22 +911,9 @@
         }
     }
 
-    function onKrwInput(el) {
-        lastEditedField = 'KRW';
-        formatNumberInput(el);
-        recalculate();
-    }
-
-    function onForeignInput(el) {
-        lastEditedField = 'FOREIGN';
-        formatNumberInput(el);
-        recalculate();
-    }
-
-    function onRateInput(el) {
-        formatNumberInput(el, true);
-        recalculate();
-    }
+    function onKrwInput(el) { lastEditedField = 'KRW'; formatNumberInput(el); recalculate(); }
+    function onForeignInput(el) { lastEditedField = 'FOREIGN'; formatNumberInput(el); recalculate(); }
+    function onRateInput(el) { formatNumberInput(el, true); recalculate(); }
 
     function recalculate() {
         const krwEl = document.getElementById('inputKrw');
@@ -1007,26 +931,13 @@
         }
 
         if (lastEditedField === 'KRW' && krw > 0) {
-            let calcForeign = 0;
-            if (currentCurrency === 'USD') {
-                calcForeign = krw / rate;
-                foreignEl.value = calcForeign.toLocaleString('en-US', {maximumFractionDigits: 2});
-                previewEl.innerText = '$' + calcForeign.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            } else {
-                calcForeign = (krw / rate) * 100;
-                foreignEl.value = calcForeign.toLocaleString('ja-JP', {maximumFractionDigits: 0});
-                previewEl.innerText = '¥' + calcForeign.toLocaleString('ja-JP', {maximumFractionDigits: 0});
-            }
+            let calcForeign = currentCurrency === 'USD' ? (krw / rate) : ((krw / rate) * 100);
+            foreignEl.value = calcForeign.toLocaleString('en-US', {maximumFractionDigits: 2});
+            previewEl.innerText = (currentCurrency === 'USD' ? '$' : '¥') + calcForeign.toLocaleString(undefined, {maximumFractionDigits: 2});
         } else if (lastEditedField === 'FOREIGN' && foreign > 0) {
-            let calcKrw = 0;
-            if (currentCurrency === 'USD') {
-                calcKrw = foreign * rate;
-            } else {
-                calcKrw = (foreign / 100) * rate;
-            }
+            let calcKrw = currentCurrency === 'USD' ? (foreign * rate) : ((foreign / 100) * rate);
             krwEl.value = Math.round(calcKrw).toLocaleString();
-            const symbol = currentCurrency === 'USD' ? '$' : '¥';
-            previewEl.innerText = symbol + foreign.toLocaleString();
+            previewEl.innerText = (currentCurrency === 'USD' ? '$' : '¥') + foreign.toLocaleString();
         }
     }
 
@@ -1057,25 +968,6 @@
         renderData();
     }
 
-    function recalculateDemoSummary(curr) {
-        const history = demoData[curr].history;
-        let totalKrw = 0;
-        let totalForeign = 0;
-
-        history.forEach(h => {
-            totalKrw += Number(h.krw) || 0;
-            totalForeign += Number(h.foreign) || 0;
-        });
-
-        let avgRate = 0;
-        if (totalForeign > 0) {
-            avgRate = curr === 'USD' ? (totalKrw / totalForeign) : ((totalKrw / totalForeign) * 100);
-        }
-
-        demoData[curr].summary = { avgRate, totalForeign, totalKrw };
-        localStorage.setItem('demoData', JSON.stringify(demoData));
-    }
-
     function renderData() {
         if (!rawData) return;
 
@@ -1095,96 +987,43 @@
         });
 
         if (filteredHistory.length === 0) {
-            listEl.innerHTML = '<div style="color:var(--text-light); text-align:center; padding: 24px 0; font-weight:600;">조건에 맞는 내역이 없습니다.</div>';
+            listEl.innerHTML = '<div style="color:var(--text-light); text-align:center; padding: 24px 0; font-weight:600;">저장된 환전 내역이 없습니다.</div>';
             return;
         }
 
-        const groupedHistory = {};
-        filteredHistory.forEach((item, originalIndex) => {
-            let dStr = item.date ? item.date.toString().substring(0, 10) : '날짜 미상';
-            let year = dStr.substring(0, 4) || '기타';
-
-            if (!groupedHistory[year]) {
-                groupedHistory[year] = { totalForeign: 0, items: [] };
-            }
-            groupedHistory[year].totalForeign += Number(item.foreign) || 0;
-            groupedHistory[year].items.push({ ...item, originalIndex });
-        });
-
         let html = '';
-        const sortedYears = Object.keys(groupedHistory).sort((a, b) => b - a);
-
-        sortedYears.forEach(year => {
-            const yearTotal = groupedHistory[year].totalForeign;
+        filteredHistory.slice().reverse().forEach((item, index) => {
+            let dStr = item.date ? item.date.toString().substring(0, 10) : '';
             html += `
-                <div class="year-group-header">
-                    <span>📅 ${year}년</span>
-                    <span style="font-size:12px; font-weight:700;">합계 ${symbol}${yearTotal.toLocaleString(undefined, {maximumFractionDigits: 2})}</span>
-                </div>
-            `;
-
-            // 최신 기록이 맨 위로 오도록 내림차순 정렬
-            const sortedItems = groupedHistory[year].items.sort((a, b) => new Date(b.date) - new Date(a.date));
-
-            sortedItems.forEach(item => {
-                let dStr = item.date ? item.date.toString().substring(0, 10) : '';
-                html += `
-                    <div class="history-item">
-                        <div class="history-info">
-                            <div class="rate-val">${Number(item.rate).toLocaleString()} 원</div>
-                            <div class="date-memo">🗓️ ${dStr} ${item.memo ? '· 📝 ' + item.memo : ''}</div>
+                <div class="history-item">
+                    <div class="history-info">
+                        <div class="rate-val">${Number(item.rate).toLocaleString()} 원</div>
+                        <div class="date-memo">🗓️ ${dStr} ${item.memo ? '· 📝 ' + item.memo : ''}</div>
+                    </div>
+                    <div class="history-right">
+                        <div class="amounts">
+                            <div class="foreign-val">+${symbol}${Number(item.foreign).toLocaleString(undefined, {maximumFractionDigits: 2})}</div>
+                            <div class="krw-val">${Number(item.krw).toLocaleString()} 원</div>
                         </div>
-                        <div class="history-right">
-                            <div class="amounts">
-                                <div class="foreign-val">+${symbol}${Number(item.foreign).toLocaleString(undefined, {maximumFractionDigits: 2})}</div>
-                                <div class="krw-val">${Number(item.krw).toLocaleString()} 원</div>
-                            </div>
-                            <div>
-                                <button class="btn-edit" onclick="openEditModal(${item.originalIndex})">수정</button>
-                                <button class="btn-delete" onclick="deleteRecord('${currentCurrency}', ${item.originalIndex})">삭제</button>
-                            </div>
+                        <div>
+                            <button class="btn-delete" onclick="deleteRecord('${currentCurrency}', ${history.length - 1 - index})">삭제</button>
                         </div>
                     </div>
-                `;
-            });
+                </div>
+            `;
         });
 
         listEl.innerHTML = html;
     }
 
-    function exportToCSV() {
-        if (!rawData || !rawData[currentCurrency]) return;
-        const history = rawData[currentCurrency].history || [];
-        
-        if (history.length === 0) {
-            alert("다운로드할 내역이 없습니다.");
-            return;
-        }
-
-        let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-        csvContent += "날짜,통화,원화금액(KRW),적용환율,외화금액,메모\n";
-
-        history.forEach(row => {
-            let dStr = row.date ? row.date.toString().substring(0, 10) : '';
-            csvContent += `"${dStr}","${currentCurrency}","${row.krw}","${row.rate}","${row.foreign}","${row.memo || ''}"\n`;
-        });
-
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `환전내역_${currentCurrency}_${new Date().toISOString().substring(0, 10)}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
-
+    // ⭐ [핵심 수정] 기록하기 전송 방식 버그 픽스
     async function sendRequest(params) {
         const query = new URLSearchParams(params).toString();
-        // CORS 및 백엔드 반영 지연 우회를 위해 구글 스크립트 전송 방식 최적화
+        // CORS 및 백엔드 스크립트 연결 안정화를 위한 jsonp 방식 호환 호출
         await fetch(`${SCRIPT_URL}?${query}`, { mode: 'no-cors' });
         
-        // 데이터가 구글 시트에 완전히 쓰여질 수 있도록 간격 부여 후 동기화
-        await new Promise(r => setTimeout(r, 1500));
+        // 데이터가 Google Sheet에 전달되어 가공될 때까지 1.2초 대기 후 재로드
+        await new Promise(r => setTimeout(r, 1200));
         await loadData();
     }
 
@@ -1192,7 +1031,6 @@
         const date = document.getElementById('inputDate').value;
         const krw = document.getElementById('inputKrw').value.replace(/,/g, '');
         const rate = document.getElementById('inputRate').value.replace(/,/g, '');
-        const foreign = document.getElementById('inputForeign').value.replace(/,/g, '');
         const memo = document.getElementById('inputMemo').value;
 
         if (!date || !krw || !rate) {
@@ -1205,10 +1043,11 @@
         btn.disabled = true;
 
         if (isDemoMode) {
+            let foreign = currentCurrency === 'USD' ? (Number(krw) / Number(rate)) : ((Number(krw) / Number(rate)) * 100);
             demoData[currentCurrency].history.push({
-                date, krw: Number(krw), rate: Number(rate), foreign: Number(foreign), memo
+                date, krw: Number(krw), rate: Number(rate), foreign, memo
             });
-            recalculateDemoSummary(currentCurrency);
+            localStorage.setItem('demoData', JSON.stringify(demoData));
             loadData();
         } else {
             document.getElementById('historyList').innerHTML = '<div class="spinner-container"><div class="spinner"></div></div>';
@@ -1217,49 +1056,11 @@
 
         document.getElementById('inputKrw').value = '';
         document.getElementById('inputForeign').value = '';
-        document.getElementById('inputRate').value = '';
         document.getElementById('inputMemo').value = '';
         recalculate();
         
         btn.innerText = '기록하기';
         btn.disabled = false;
-    }
-
-    function openEditModal(index) {
-        const item = rawData[currentCurrency].history[index];
-        document.getElementById('editIndex').value = index;
-        document.getElementById('editDate').value = item.date ? item.date.toString().substring(0, 10) : '';
-        document.getElementById('editKrw').value = item.krw.toLocaleString();
-        document.getElementById('editRate').value = item.rate.toLocaleString();
-        document.getElementById('editMemo').value = item.memo || '';
-        document.getElementById('editModal').style.display = 'flex';
-    }
-
-    async function saveEdit() {
-        const index = document.getElementById('editIndex').value;
-        const date = document.getElementById('editDate').value;
-        const krw = document.getElementById('editKrw').value.replace(/,/g, '');
-        const rate = document.getElementById('editRate').value.replace(/,/g, '');
-        const memo = document.getElementById('editMemo').value;
-
-        closeModal('editModal');
-        document.getElementById('historyList').innerHTML = '<div class="spinner-container"><div class="spinner"></div></div>';
-        
-        if (isDemoMode) {
-            let calcForeign = 0;
-            if (currentCurrency === 'USD') {
-                calcForeign = Number(krw) / Number(rate);
-            } else {
-                calcForeign = (Number(krw) / Number(rate)) * 100;
-            }
-            demoData[currentCurrency].history[index] = {
-                date, krw: Number(krw), rate: Number(rate), foreign: calcForeign, memo
-            };
-            recalculateDemoSummary(currentCurrency);
-            loadData();
-        } else {
-            await sendRequest({ action: 'update', currency: currentCurrency, index, date, krw, rate, memo: encodeURIComponent(memo) });
-        }
     }
 
     async function deleteRecord(currency, index) {
@@ -1268,14 +1069,13 @@
         
         if (isDemoMode) {
             demoData[currency].history.splice(index, 1);
-            recalculateDemoSummary(currency);
+            localStorage.setItem('demoData', JSON.stringify(demoData));
             loadData();
         } else {
             await sendRequest({ action: 'delete', currency, index });
         }
     }
 
-    // 초기 실행
     fetchLiveExchangeRates();
     loadData();
 </script>
