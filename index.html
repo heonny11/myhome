@@ -254,27 +254,8 @@
             margin-top: 12px;
             position: relative;
             height: 220px;
+            width: 100%;
         }
-
-        .chart-period-group {
-            display: flex;
-            gap: 4px;
-            margin-bottom: 10px;
-            justify-content: space-between;
-        }
-        .chart-period-btn {
-            background: rgba(255,255,255,0.1);
-            border: none;
-            color: #a5b4fc;
-            padding: 5px 8px;
-            border-radius: 8px;
-            font-size: 11px;
-            font-weight: 700;
-            cursor: pointer;
-            flex: 1;
-            text-align: center;
-        }
-        .chart-period-btn.active { background: #3b82f6; color: #ffffff; }
 
         .card-title { margin: 0 0 18px 0; font-size: 18px; font-weight: 800; color: var(--text-dark); display: flex; align-items: center; justify-content: space-between; }
         .form-group { margin-bottom: 16px; }
@@ -412,15 +393,7 @@
         </button>
 
         <div class="chart-container" id="chartContainer">
-            <div class="chart-period-group">
-                <button class="chart-period-btn" onclick="changeChartPeriod('today', this)">1일</button>
-                <button class="chart-period-btn" onclick="changeChartPeriod('3M', this)">3개월</button>
-                <button class="chart-period-btn active" onclick="changeChartPeriod('1Y', this)">1년</button>
-                <button class="chart-period-btn" onclick="changeChartPeriod('3Y', this)">3년</button>
-                <button class="chart-period-btn" onclick="changeChartPeriod('5Y', this)">5년</button>
-                <button class="chart-period-btn" onclick="changeChartPeriod('10Y', this)">10년</button>
-            </div>
-            <div style="position: relative; height: 150px; width: 100%;">
+            <div style="position: relative; height: 190px; width: 100%;">
                 <canvas id="rateChart"></canvas>
             </div>
         </div>
@@ -545,9 +518,8 @@
 
     let currentCurrency = 'USD';
     let rawData = null;
-    let liveRates = { USD: 1337.20, JPY: 910.50, prevUSD: 1336.50, prevJPY: 910.00 };
+    let liveRates = { USD: 1337.50, JPY: 910.20, prevUSD: 1336.50, prevJPY: 909.70 };
     let chartInstance = null;
-    let currentPeriod = '1Y';
     let activeFilter = 'ALL';
     let lastEditedField = 'KRW';
     
@@ -558,8 +530,7 @@
         USD: {
             summary: { avgRate: 1350.50, totalForeign: 500, totalKrw: 675250 },
             history: [
-                { date: '2025-09-01', krw: 675250, rate: 1350.50, foreign: 500, memo: '📈 주식투자' },
-                { date: '2026-01-15', krw: 1360000, rate: 1360.00, foreign: 1000, memo: '분할환전' }
+                { date: '2025-09-01', krw: 675250, rate: 1350.50, foreign: 500, memo: '📈 주식투자' }
             ]
         },
         JPY: {
@@ -663,15 +634,15 @@
             if (data && (data.USD || data.JPY)) {
                 if (data.USD) {
                     liveRates.USD = Number(data.USD);
-                    liveRates.prevUSD = data.prevUSD ? Number(data.prevUSD) : liveRates.USD - 0.5;
+                    liveRates.prevUSD = data.prevUSD ? Number(data.prevUSD) : liveRates.USD - 1.0;
                 }
                 if (data.JPY) {
                     liveRates.JPY = Number(data.JPY);
-                    liveRates.prevJPY = data.prevJPY ? Number(data.prevJPY) : liveRates.JPY - 0.2;
+                    liveRates.prevJPY = data.prevJPY ? Number(data.prevJPY) : liveRates.JPY - 0.5;
                 }
             }
         } catch (e) {
-            console.warn("실시간 연동 기본값 유지");
+            console.warn("실시간 연동 기본값 사용");
         } finally {
             updateLiveRateUI();
             checkTargetRate();
@@ -751,23 +722,14 @@
     function toggleChart() {
         const container = document.getElementById('chartContainer');
         const arrow = document.getElementById('chartArrow');
-        if (container.style.display === 'block') {
-            container.style.display = 'none';
-            arrow.innerText = '▼';
-        } else {
-            container.style.display = 'block';
-            arrow.innerText = '▲';
-            setTimeout(() => renderChart(), 100);
-        }
-    }
+        const isHidden = container.style.display !== 'block';
 
-    function changeChartPeriod(period, btnEl) {
-        currentPeriod = period;
-        if (btnEl) {
-            btnEl.parentElement.querySelectorAll('.chart-period-btn').forEach(b => b.classList.remove('active'));
-            btnEl.classList.add('active');
+        container.style.display = isHidden ? 'block' : 'none';
+        arrow.innerText = isHidden ? '▲' : '▼';
+
+        if (isHidden) {
+            requestAnimationFrame(() => renderChart());
         }
-        renderChart();
     }
 
     function renderChart() {
@@ -991,9 +953,10 @@
         } else {
             document.getElementById('historyList').innerHTML = '<div class="spinner-container"><div class="spinner"></div></div>';
             
-            // 시트 저장 처리 및 동기화 지연시간 보장
             await fetch(`${SCRIPT_URL}?action=add&currency=${currentCurrency}&date=${date}&krw=${krw}&rate=${rate}&memo=${encodeURIComponent(memo)}`, { mode: 'no-cors' });
-            await new Promise(r => setTimeout(r, 2000));
+            
+            // 시트 데이터 반영 동기화 대기 시간 (2.5초)
+            await new Promise(r => setTimeout(r, 2500));
             await loadData();
         }
 
@@ -1016,7 +979,7 @@
             loadData();
         } else {
             await fetch(`${SCRIPT_URL}?action=delete&currency=${currency}&index=${index}`, { mode: 'no-cors' });
-            await new Promise(r => setTimeout(r, 2000));
+            await new Promise(r => setTimeout(r, 2500));
             await loadData();
         }
     }
