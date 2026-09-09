@@ -283,6 +283,7 @@
         .card-title { margin: 0 0 18px 0; font-size: 18px; font-weight: 800; color: var(--text-dark); display: flex; align-items: center; justify-content: space-between; }
         .form-group { margin-bottom: 16px; }
         .form-group label { display: block; font-size: 13px; font-weight: 700; color: var(--text-gray); margin-bottom: 8px; }
+        .input-hint { font-size: 11px; color: var(--text-light); margin-top: 4px; font-weight: 600; }
         
         .quick-group { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
         .quick-btn {
@@ -464,6 +465,7 @@
                 <input type="text" id="inputRate" placeholder="예: 1,337.20" oninput="onRateInput(this)">
                 <span class="unit-label">원</span>
             </div>
+            <div class="input-hint" id="rateHint" style="display:none;">* 100엔 기준 환율을 입력하세요 (예: 900원 = 100엔)</div>
         </div>
 
         <div class="calc-preview">
@@ -513,7 +515,7 @@
 <div class="modal-overlay" id="editModal">
     <div class="modal-card">
         <h3 class="card-title">✏️ 환전 내역 수정</h3>
-        <input type="hidden" id="editIndex">
+        <input type="hidden" id="editId">
         <div class="form-group">
             <label>📅 날짜</label>
             <input type="date" id="editDate">
@@ -525,6 +527,7 @@
         <div class="form-group">
             <label>💱 적용 환율</label>
             <input type="text" id="editRate" oninput="formatNumberInput(this, true)">
+            <div class="input-hint" id="editRateHint" style="display:none;">* 100엔 기준 환율 입력</div>
         </div>
         <div class="form-group">
             <label>📝 메모</label>
@@ -790,7 +793,6 @@
         const img = document.getElementById('naverChartImg');
         const code = currentCurrency === 'USD' ? 'FX_USDKRW' : 'FX_JPYKRW';
         
-        // 네이버 차트 기간 URL 연결
         let chartUrl = `https://ssl.pstatic.net/imgfinance/chart/marketindex/${code}.png`;
         if (currentChartPeriod === '1m') {
             chartUrl = `https://ssl.pstatic.net/imgfinance/chart/marketindex/area/month/${code}.png`;
@@ -810,22 +812,17 @@
         document.getElementById('tabUSD').classList.toggle('active', curr === 'USD');
         document.getElementById('tabJPY').classList.toggle('active', curr === 'JPY');
         
-        // 목표환율 초기화
         document.getElementById('targetRateInput').value = '';
         
-        if(curr === 'USD') {
-            document.getElementById('summaryTitle').innerText = '📈 미국 달러 평균환율';
-            document.getElementById('rateLabel').innerText = '💱 적용 환율 (원/$)';
-            document.getElementById('foreignInputLabel').innerText = '💵 외화 금액 (USD)';
-            document.getElementById('foreignUnitLabel').innerText = '$';
-            document.getElementById('targetRateInput').placeholder = "1300";
-        } else {
-            document.getElementById('summaryTitle').innerText = '📈 일본 엔화 평균환율 (100엔당)';
-            document.getElementById('rateLabel').innerText = '💱 적용 환율 (원/100엔)';
-            document.getElementById('foreignInputLabel').innerText = '💴 외화 금액 (JPY)';
-            document.getElementById('foreignUnitLabel').innerText = '¥';
-            document.getElementById('targetRateInput').placeholder = "900";
-        }
+        const isJpy = curr === 'JPY';
+        document.getElementById('summaryTitle').innerText = isJpy ? '📈 일본 엔화 평균환율 (100엔당)' : '📈 미국 달러 평균환율';
+        document.getElementById('rateLabel').innerText = isJpy ? '💱 적용 환율 (원/100엔)' : '💱 적용 환율 (원/$)';
+        document.getElementById('foreignInputLabel').innerText = isJpy ? '💴 외화 금액 (JPY)' : '💵 외화 금액 (USD)';
+        document.getElementById('foreignUnitLabel').innerText = isJpy ? '¥' : '$';
+        document.getElementById('targetRateInput').placeholder = isJpy ? "900" : "1300";
+        document.getElementById('rateHint').style.display = isJpy ? 'block' : 'none';
+        document.getElementById('editRateHint').style.display = isJpy ? 'block' : 'none';
+
         updateLiveRateUI();
         checkTargetRate();
         calculateProfitLoss();
@@ -891,6 +888,16 @@
         try {
             const res = await fetch(`${SCRIPT_URL}?t=${Date.now()}`);
             rawData = await res.json();
+            
+            // 고유 ID 보장 처리
+            ['USD', 'JPY'].forEach(curr => {
+                if (rawData[curr] && rawData[curr].history) {
+                    rawData[curr].history.forEach((item, idx) => {
+                        if (!item.id) item.id = Date.now() + '_' + idx;
+                    });
+                }
+            });
+
             renderData();
             calculateProfitLoss();
         } catch (err) {
@@ -905,7 +912,6 @@
         renderData();
     }
 
-    // 통계(평균환율, 보유금액) 자체 즉시 재계산 함수
     function recalculateSummary(currency) {
         if (!rawData || !rawData[currency]) return;
         const history = rawData[currency].history || [];
@@ -948,8 +954,8 @@
         }
 
         let html = '';
-        filteredHistory.slice().reverse().forEach((item, index) => {
-            let realIndex = history.length - 1 - index;
+        // 고유 ID 기반 렌더링
+        filteredHistory.slice().reverse().forEach((item) => {
             let dStr = item.date ? item.date.toString().substring(0, 10) : '';
             html += `
                 <div class="history-item">
@@ -963,8 +969,8 @@
                             <div class="krw-val">${Number(item.krw).toLocaleString()} 원</div>
                         </div>
                         <div class="btn-action-group">
-                            <button class="btn-edit" onclick="openEditModal(${realIndex})">수정</button>
-                            <button class="btn-delete" onclick="deleteRecord('${currentCurrency}', ${realIndex})">삭제</button>
+                            <button class="btn-edit" onclick="openEditModal('${item.id}')">수정</button>
+                            <button class="btn-delete" onclick="deleteRecord('${currentCurrency}', '${item.id}')">삭제</button>
                         </div>
                     </div>
                 </div>
@@ -990,30 +996,41 @@
         btn.disabled = true;
 
         let foreign = currentCurrency === 'USD' ? (Number(krw) / Number(rate)) : ((Number(krw) / Number(rate)) * 100);
+        const newItem = { id: 'id_' + Date.now(), date, krw: Number(krw), rate: Number(rate), foreign, memo };
 
         if (isDemoMode) {
-            demoData[currentCurrency].history.push({ date, krw: Number(krw), rate: Number(rate), foreign, memo });
+            demoData[currentCurrency].history.push(newItem);
             recalculateSummary(currentCurrency);
             renderData();
         } else {
-            // 즉시 화면 반영 (Optimistic UI)
+            // 롤백을 위한 스냅샷 저장
+            const previousState = JSON.parse(JSON.stringify(rawData));
+
             if (!rawData[currentCurrency]) rawData[currentCurrency] = { summary: {}, history: [] };
-            rawData[currentCurrency].history.push({ date, krw: Number(krw), rate: Number(rate), foreign, memo });
+            rawData[currentCurrency].history.push(newItem);
             recalculateSummary(currentCurrency);
             renderData();
             calculateProfitLoss();
 
-            // 구글 시트 백그라운드 동기화
-            const params = new URLSearchParams({
-                action: 'add',
-                currency: currentCurrency,
-                date: date,
-                krw: krw,
-                rate: rate,
-                memo: memo
-            });
+            // 백엔드 비동기 통신 및 실패 시 롤백 예외 처리
+            try {
+                const params = new URLSearchParams({
+                    action: 'add',
+                    id: newItem.id,
+                    currency: currentCurrency,
+                    date: date,
+                    krw: krw,
+                    rate: rate,
+                    memo: memo
+                });
 
-            fetch(`${SCRIPT_URL}?${params.toString()}`, { mode: 'no-cors' }).catch(e => console.error(e));
+                await fetch(`${SCRIPT_URL}?${params.toString()}`, { mode: 'no-cors' });
+            } catch (e) {
+                alert('⚠️ 네트워크 오류로 구글 시트에 저장되지 못했습니다. 이전 상태로 되돌립니다.');
+                rawData = previousState;
+                renderData();
+                calculateProfitLoss();
+            }
         }
 
         document.getElementById('inputKrw').value = '';
@@ -1025,12 +1042,12 @@
         btn.disabled = false;
     }
 
-    function openEditModal(index) {
+    function openEditModal(id) {
         const history = isDemoMode ? demoData[currentCurrency]?.history : rawData?.[currentCurrency]?.history || [];
-        const item = history[index];
+        const item = history.find(i => i.id === id);
         if (!item) return;
 
-        document.getElementById('editIndex').value = index;
+        document.getElementById('editId').value = id;
         document.getElementById('editDate').value = item.date ? item.date.toString().substring(0, 10) : '';
         document.getElementById('editKrw').value = Number(item.krw).toLocaleString();
         document.getElementById('editRate').value = Number(item.rate).toLocaleString();
@@ -1040,7 +1057,7 @@
     }
 
     async function saveEditRecord() {
-        const index = document.getElementById('editIndex').value;
+        const id = document.getElementById('editId').value;
         const date = document.getElementById('editDate').value;
         const krw = document.getElementById('editKrw').value.replace(/,/g, '');
         const rate = document.getElementById('editRate').value.replace(/,/g, '');
@@ -1055,53 +1072,73 @@
         let foreign = currentCurrency === 'USD' ? (Number(krw) / Number(rate)) : ((Number(krw) / Number(rate)) * 100);
 
         if (isDemoMode) {
-            demoData[currentCurrency].history[index] = { date, krw: Number(krw), rate: Number(rate), foreign, memo };
-            recalculateSummary(currentCurrency);
-            renderData();
+            const idx = demoData[currentCurrency].history.findIndex(i => i.id === id);
+            if (idx !== -1) {
+                demoData[currentCurrency].history[idx] = { id, date, krw: Number(krw), rate: Number(rate), foreign, memo };
+                recalculateSummary(currentCurrency);
+                renderData();
+            }
         } else {
-            // 즉시 화면 반영 (Optimistic UI)
-            rawData[currentCurrency].history[index] = { date, krw: Number(krw), rate: Number(rate), foreign, memo };
-            recalculateSummary(currentCurrency);
-            renderData();
-            calculateProfitLoss();
+            const previousState = JSON.parse(JSON.stringify(rawData));
 
-            // 구글 시트 백그라운드 동기화
-            const params = new URLSearchParams({
-                action: 'edit',
-                currency: currentCurrency,
-                index: index,
-                date: date,
-                krw: krw,
-                rate: rate,
-                memo: memo
-            });
+            const idx = rawData[currentCurrency].history.findIndex(i => i.id === id);
+            if (idx !== -1) {
+                rawData[currentCurrency].history[idx] = { id, date, krw: Number(krw), rate: Number(rate), foreign, memo };
+                recalculateSummary(currentCurrency);
+                renderData();
+                calculateProfitLoss();
 
-            fetch(`${SCRIPT_URL}?${params.toString()}`, { mode: 'no-cors' }).catch(e => console.error(e));
+                try {
+                    const params = new URLSearchParams({
+                        action: 'edit',
+                        id: id,
+                        currency: currentCurrency,
+                        date: date,
+                        krw: krw,
+                        rate: rate,
+                        memo: memo
+                    });
+
+                    await fetch(`${SCRIPT_URL}?${params.toString()}`, { mode: 'no-cors' });
+                } catch (e) {
+                    alert('⚠️ 네트워크 에러로 수정 사항이 구글 시트에 반영되지 않아 롤백되었습니다.');
+                    rawData = previousState;
+                    renderData();
+                    calculateProfitLoss();
+                }
+            }
         }
     }
 
-    async function deleteRecord(currency, index) {
+    async function deleteRecord(currency, id) {
         if (!confirm('정말 삭제하시겠습니까?')) return;
-        
+
         if (isDemoMode) {
-            demoData[currency].history.splice(index, 1);
+            demoData[currency].history = demoData[currency].history.filter(i => i.id !== id);
             recalculateSummary(currency);
             renderData();
         } else {
-            // 즉시 화면 반영 (Optimistic UI)
-            rawData[currency].history.splice(index, 1);
+            const previousState = JSON.parse(JSON.stringify(rawData));
+
+            rawData[currency].history = rawData[currency].history.filter(i => i.id !== id);
             recalculateSummary(currency);
             renderData();
             calculateProfitLoss();
 
-            // 구글 시트 백그라운드 동기화
-            const params = new URLSearchParams({
-                action: 'delete',
-                currency: currency,
-                index: index
-            });
+            try {
+                const params = new URLSearchParams({
+                    action: 'delete',
+                    id: id,
+                    currency: currency
+                });
 
-            fetch(`${SCRIPT_URL}?${params.toString()}`, { mode: 'no-cors' }).catch(e => console.error(e));
+                await fetch(`${SCRIPT_URL}?${params.toString()}`, { mode: 'no-cors' });
+            } catch (e) {
+                alert('⚠️ 삭제 요청 처리 중 네트워크 오류가 발생하여 원상복구합니다.');
+                rawData = previousState;
+                renderData();
+                calculateProfitLoss();
+            }
         }
     }
 
