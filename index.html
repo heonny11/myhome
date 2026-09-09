@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>외화 대량 매매 및 평단가 스마트 관리 시스템</title>
-  <!-- Google Fonts: Pretendard 최적화 폰트 -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
   <style>
     :root {
@@ -50,7 +49,6 @@
       margin: 0 auto;
     }
 
-    /* 상단 헤더 */
     header {
       display: flex;
       justify-content: space-between;
@@ -119,7 +117,6 @@
       border-color: var(--text-muted);
     }
 
-    /* 입체감 있는 상단 요약 카드 */
     .summary-card {
       background: linear-gradient(145deg, #182234, #0f1523);
       border: 1px solid rgba(255, 255, 255, 0.1);
@@ -200,7 +197,6 @@
       font-weight: 600;
     }
 
-    /* 메인 그리드 레이아웃 (USD / JPY) */
     .main-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -251,7 +247,6 @@
     .usd-theme .badge-pill { background: rgba(56, 189, 248, 0.15); color: var(--accent-usd); border: 1px solid rgba(56, 189, 248, 0.3); }
     .jpy-theme .badge-pill { background: rgba(251, 113, 133, 0.15); color: var(--accent-jpy); border: 1px solid rgba(251, 113, 133, 0.3); }
 
-    /* 입체감 있는 입력 폼 */
     .form-container {
       background: rgba(8, 12, 20, 0.5);
       padding: 20px;
@@ -308,7 +303,6 @@
       color: var(--accent-gold) !important;
     }
 
-    /* 버튼 스타일 */
     .btn-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -345,7 +339,6 @@
       color: white;
     }
 
-    /* 필터 및 검색 */
     .table-controls {
       display: flex;
       justify-content: space-between;
@@ -393,7 +386,6 @@
       cursor: pointer;
     }
 
-    /* 테이블 */
     .table-container {
       margin-top: 8px;
       overflow-x: auto;
@@ -469,11 +461,6 @@
       transform: scale(1.1);
     }
 
-    .btn-del:disabled {
-      opacity: 0.3;
-      cursor: not-allowed;
-    }
-
     .empty-msg {
       text-align: center !important;
       color: var(--text-sub);
@@ -481,7 +468,6 @@
       font-weight: 600;
     }
 
-    /* 토스트 알림 */
     .toast {
       position: fixed;
       bottom: 24px;
@@ -511,7 +497,6 @@
 <body>
 
 <div class="container">
-  <!-- 상단 헤더 -->
   <header>
     <div class="brand-title">
       <h1>🌐 외화 대량 매매 및 평단가 스마트 관리 시스템</h1>
@@ -526,7 +511,6 @@
     </div>
   </header>
 
-  <!-- 상단 통합 자산 요약 카드 -->
   <div class="summary-card">
     <div class="summary-header">
       <div class="summary-title">📊 전체 통합 자산 요약 현황</div>
@@ -556,9 +540,7 @@
     </div>
   </div>
 
-  <!-- 메인 입출력 및 내역 섹션 -->
   <div class="main-grid">
-    
     <!-- USD 섹션 -->
     <div class="currency-section usd-theme">
       <div class="section-header">
@@ -566,7 +548,6 @@
         <span class="badge-pill">USD / KRW</span>
       </div>
 
-      <!-- 입력 폼 -->
       <div class="form-container">
         <div class="form-grid">
           <div class="input-wrapper">
@@ -593,7 +574,6 @@
         </div>
       </div>
 
-      <!-- 필터 및 검색 -->
       <div class="table-controls">
         <div class="search-box">
           <input type="text" id="usd-search" placeholder="날짜 검색..." oninput="filterRecords('USD')">
@@ -607,7 +587,6 @@
         </div>
       </div>
 
-      <!-- 매매 내역 테이블 -->
       <div class="table-container">
         <table>
           <thead>
@@ -620,9 +599,7 @@
               <th>삭제</th>
             </tr>
           </thead>
-          <tbody id="usd-table-body">
-            <!-- JS 렌더링 -->
-          </tbody>
+          <tbody id="usd-table-body"></tbody>
         </table>
       </div>
     </div>
@@ -634,7 +611,6 @@
         <span class="badge-pill">JPY / KRW (100엔)</span>
       </div>
 
-      <!-- 입력 폼 -->
       <div class="form-container">
         <div class="form-grid">
           <div class="input-wrapper">
@@ -661,7 +637,6 @@
         </div>
       </div>
 
-      <!-- 필터 및 검색 -->
       <div class="table-controls">
         <div class="search-box">
           <input type="text" id="jpy-search" placeholder="날짜 검색..." oninput="filterRecords('JPY')">
@@ -675,7 +650,6 @@
         </div>
       </div>
 
-      <!-- 매매 내역 테이블 -->
       <div class="table-container">
         <table>
           <thead>
@@ -688,29 +662,21 @@
               <th>삭제</th>
             </tr>
           </thead>
-          <tbody id="jpy-table-body">
-            <!-- JS 렌더링 -->
-          </tbody>
+          <tbody id="jpy-table-body"></tbody>
         </table>
       </div>
     </div>
-
   </div>
 </div>
 
-<!-- 토스트 알림 모달 -->
 <div class="toast" id="toast">🔔 처리되었습니다.</div>
 
 <script>
-  // 🎯 구글 스프레드시트 웹앱 API 주소 고정
+  // 🎯 최신 새로 배포된 고정 웹앱 URL
   const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxrV91wYsb1Nmk6H0tMxIima1KZn1OKm3kYqX_iXPkgywgjAryFwR9tUb7q1XuXJfG5VA/exec';
   
-  let store = {
-    USD: [],
-    JPY: []
-  };
-
-  let isDeleting = false; // 중복 삭제 방지 플래그
+  let store = { USD: [], JPY: [] };
+  let isDeleting = false;
 
   window.onload = function() {
     const today = new Date().toISOString().split('T')[0];
@@ -719,9 +685,6 @@
 
     setupAutoCalc('usd');
     setupAutoCalc('jpy');
-
-    setupEnterKey('usd');
-    setupEnterKey('jpy');
 
     fetchData();
   };
@@ -734,54 +697,39 @@
     function calc() {
       const rate = parseFloat(rateInput.value) || 0;
       const foreign = parseFloat(foreignInput.value) || 0;
-      
-      if (type === 'usd') {
-        krwInput.value = Math.round(rate * foreign);
-      } else {
-        krwInput.value = Math.round((rate / 100) * foreign);
-      }
+      krwInput.value = type === 'usd' ? Math.round(rate * foreign) : Math.round((rate / 100) * foreign);
     }
 
     rateInput.addEventListener('input', calc);
     foreignInput.addEventListener('input', calc);
   }
 
-  function setupEnterKey(type) {
-    const currency = type.toUpperCase();
-    ['rate', 'foreign'].forEach(field => {
-      document.getElementById(`${type}-${field}`).addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-          addRecord(currency, '매수');
-        }
-      });
-    });
-  }
-
   function showToast(msg) {
     const toast = document.getElementById('toast');
     toast.innerText = msg;
     toast.classList.add('show');
-    setTimeout(() => {
-      toast.classList.remove('show');
-    }, 3000);
+    setTimeout(() => toast.classList.remove('show'), 3000);
   }
 
   async function fetchData() {
     updateStatus('● 동기화 중...', '#fbbf24');
 
     try {
-      const res = await fetch(`${WEB_APP_URL}?action=fetch`);
+      const res = await fetch(`${WEB_APP_URL}?action=fetch&t=${Date.now()}`);
       const data = await res.json();
       
-      if (data && data.USD) store.USD = data.USD.history || [];
-      if (data && data.JPY) store.JPY = data.JPY.history || [];
-
-      renderUI();
-      updateStatus('● 동기화 완료', '#10b981');
+      if (data && data.status === 'success') {
+        store.USD = data.USD ? data.USD.history || [] : [];
+        store.JPY = data.JPY ? data.JPY.history || [] : [];
+        renderUI();
+        updateStatus('● 동기화 완료', '#10b981');
+      } else {
+        throw new Error("서버 응답 오류");
+      }
     } catch (err) {
-      console.error("데이터 동기화 실패:", err);
+      console.error("데이터 동기화 에러:", err);
       updateStatus('● 구글 시트 연동 에러', '#ef4444');
-      showToast('⚠️ 구글 시트 데이터 불러오기 실패');
+      showToast('⚠️ 구글 시트 연동 권한을 확인해주세요 (Anyone으로 배포)');
     }
   }
 
@@ -797,14 +745,7 @@
       return;
     }
 
-    const newRecord = {
-      id: String(Date.now()),
-      date,
-      type,
-      rate,
-      foreign,
-      krw
-    };
+    const newRecord = { id: String(Date.now()), date, type, rate, foreign, krw };
 
     store[currency].unshift(newRecord);
     renderUI();
@@ -813,17 +754,21 @@
     document.getElementById(`${prefix}-krw`).value = '';
 
     updateStatus('● 동기화 중...', '#fbbf24');
+
     try {
+      const payload = new URLSearchParams({
+        action: 'add',
+        currency: currency,
+        tradeData: JSON.stringify(newRecord)
+      });
+
       await fetch(WEB_APP_URL, {
         method: 'POST',
         mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'add',
-          currency: currency,
-          tradeData: JSON.stringify(newRecord)
-        })
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: payload
       });
+
       updateStatus('● 동기화 완료', '#10b981');
       showToast(`✅ ${currency} ${type} 내역 저장 완료`);
     } catch (e) {
@@ -832,7 +777,6 @@
     }
   }
 
-  // 🎯 완벽 수정된 비동기 삭제 함수
   async function deleteRecord(currency, id) {
     if (isDeleting) return;
     if (!confirm('해당 매매 내역을 정말 삭제하시겠습니까?')) return;
@@ -840,21 +784,21 @@
     isDeleting = true;
     updateStatus('● 시트 데이터 삭제 중...', '#fbbf24');
 
-    // 1. 프론트엔드 메모리에서 먼저 삭제 후 UI 즉시 갱신
     store[currency] = store[currency].filter(item => String(item.id) !== String(id));
     renderUI();
 
-    // 2. 백엔드(구글 시트) 데이터 삭제 요청
     try {
+      const payload = new URLSearchParams({
+        action: 'delete',
+        currency: currency,
+        id: String(id)
+      });
+
       await fetch(WEB_APP_URL, {
         method: 'POST',
         mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'delete',
-          currency: currency,
-          id: String(id)
-        })
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: payload
       });
       
       updateStatus('● 삭제 완료', '#10b981');
@@ -862,7 +806,6 @@
     } catch (e) {
       console.error("삭제 실패:", e);
       updateStatus('● 삭제 실패', '#ef4444');
-      showToast('❌ 삭제 실패. 다시 시도해 주세요.');
     } finally {
       isDeleting = false;
     }
@@ -913,7 +856,6 @@
   }
 
   function calcSummary() {
-    // 1. USD 이동평균법
     let usdTotalAmt = 0, usdTotalKrw = 0;
     store.USD.slice().reverse().forEach(item => {
       if (item.type === '매수') {
@@ -928,7 +870,6 @@
       }
     });
 
-    // 2. JPY 이동평균법
     let jpyTotalAmt = 0, jpyTotalKrw = 0;
     store.JPY.slice().reverse().forEach(item => {
       if (item.type === '매수') {
