@@ -4,9 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>환율 계산기</title>
+    
+    <meta name="apple-mobile-web-app-title" content="환율 계산기">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔀</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💵</text></svg>">
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
+            --bg-body: #f8fafc;
+            --card-bg: #ffffff;
+            --primary: #3b82f6;
+            --primary-dark: #1d4ed8;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --text-dark: #0f172a;
+            --text-gray: #64748b;
+            --text-light: #94a3b8;
+            --border: #e2e8f0;
+            --input-bg: #f8fafc;
+        }
+
+        body.dark-mode {
             --bg-body: #0f172a;
             --card-bg: #1e293b;
             --primary: #38bdf8;
@@ -15,166 +37,737 @@
             --accent-red: #f87171;
             --text-dark: #f8fafc;
             --text-gray: #94a3b8;
+            --text-light: #64748b;
             --border: #334155;
             --input-bg: #0f172a;
         }
 
         * { box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: var(--bg-body); color: var(--text-dark); margin: 0; padding: 20px 16px; }
+        
+        body {
+            font-family: 'Apple SD Gothic Neo', -apple-system, sans-serif;
+            background-color: var(--bg-body);
+            margin: 0;
+            padding: 20px 16px;
+            color: var(--text-dark);
+            transition: background-color 0.2s, color 0.2s;
+        }
+
         .container { max-width: 480px; margin: 0 auto; }
-        
-        .tab-group { display: flex; background: var(--border); padding: 4px; border-radius: 14px; margin-bottom: 16px; }
-        .tab-btn { flex: 1; padding: 10px; border: none; background: transparent; border-radius: 10px; color: var(--text-gray); font-weight: 700; cursor: pointer; }
-        .tab-btn.active { background: var(--card-bg); color: var(--primary); }
 
-        .card { background: var(--card-bg); border-radius: 20px; padding: 20px; margin-bottom: 16px; border: 1px solid var(--border); }
-        .summary-card { background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); border: 1px solid rgba(255, 255, 255, 0.1); }
-        
-        .avg-rate-val { font-size: 32px; font-weight: 800; color: #fff; margin: 8px 0; }
-        .live-detail-bar { display: flex; justify-content: space-between; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px; font-size: 13px; margin-bottom: 12px; }
-        
-        .chart-container { display: none; background: #0f172a; padding: 12px; border-radius: 14px; margin-top: 12px; height: 220px; position: relative; }
-        .chart-toggle-btn { width: 100%; background: rgba(255,255,255,0.1); border: none; color: #fff; padding: 10px; border-radius: 10px; font-weight: 700; cursor: pointer; }
-        
-        .form-group { margin-bottom: 14px; }
-        .form-group label { display: block; font-size: 12px; color: var(--text-gray); margin-bottom: 6px; font-weight: 700; }
-        .form-group input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border); background: var(--input-bg); color: #fff; font-size: 15px; font-weight: 700; }
-        
-        .btn-submit { width: 100%; background: var(--primary); color: #000; border: none; padding: 14px; border-radius: 12px; font-size: 16px; font-weight: 800; cursor: pointer; margin-top: 8px; }
-        .btn-submit:disabled { opacity: 0.5; }
+        .top-util-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            gap: 6px;
+        }
+        .util-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text-dark);
+            padding: 6px 10px;
+            border-radius: 18px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .util-btn.demo-active { background: #fef3c7; color: #d97706; border-color: #f59e0b; }
+        .util-btn.admin-active { background: #dbeafe; color: #1d4ed8; border-color: #3b82f6; }
 
-        .history-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); }
-        .spinner-container { display: flex; justify-content: center; padding: 20px; }
-        .spinner { width: 24px; height: 24px; border: 3px solid var(--border); border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        .tab-group {
+            display: flex;
+            background: var(--border);
+            padding: 5px;
+            border-radius: 18px;
+            margin-bottom: 16px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: transparent;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--text-gray);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            background: var(--card-bg);
+            color: var(--primary-dark);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 22px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border);
+        }
+
+        .summary-card {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 60%, #312e81 100%);
+            color: #ffffff;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 14px 28px rgba(30, 27, 75, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+
+        .summary-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .summary-title { font-size: 13px; color: #a5b4fc; font-weight: 700; }
+        
+        .live-status-box { display: flex; align-items: center; gap: 8px; }
+        .live-badge {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+            border: 1px solid rgba(52, 211, 153, 0.4);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .refresh-btn {
+            background: rgba(255,255,255,0.15);
+            border: none;
+            color: white;
+            border-radius: 50%;
+            width: 26px; height: 26px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        .avg-rate-val {
+            font-size: 34px;
+            font-weight: 800;
+            color: #ffffff;
+            letter-spacing: -0.8px;
+            margin: 6px 0 12px 0;
+        }
+
+        .profit-status-bar {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 8px 12px;
+            font-size: 13px;
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .live-detail-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 10px 14px;
+            border-radius: 12px;
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+        .rate-diff { font-weight: 800; }
+        .rate-diff.up { color: #f87171; }
+        .rate-diff.down { color: #60a5fa; }
+
+        .target-rate-box {
+            background: rgba(59, 130, 246, 0.15);
+            border: 1px solid rgba(96, 165, 250, 0.3);
+            border-radius: 12px;
+            padding: 10px 12px;
+            margin-bottom: 16px;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .target-rate-box.reached {
+            background: rgba(16, 185, 129, 0.3);
+            border-color: #34d399;
+        }
+        .target-input {
+            width: 75px;
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: #fff;
+            border-radius: 6px;
+            padding: 3px 6px;
+            text-align: right;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.06);
+            padding: 14px;
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .info-box .label { font-size: 11px; color: #a5b4fc; margin-bottom: 4px; display: block; }
+        .info-box .value-foreign { font-size: 17px; font-weight: 800; color: #38bdf8; }
+        .info-box .value-krw { font-size: 17px; font-weight: 800; color: #f8fafc; }
+
+        .chart-toggle-btn {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #e2e8f0;
+            padding: 10px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .chart-container {
+            display: none;
+            background: rgba(15, 23, 42, 0.95);
+            padding: 14px;
+            border-radius: 16px;
+            margin-top: 12px;
+            position: relative;
+            height: 220px;
+        }
+
+        .chart-period-group {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 10px;
+            justify-content: space-between;
+        }
+        .chart-period-btn {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: #a5b4fc;
+            padding: 5px 8px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            flex: 1;
+            text-align: center;
+        }
+        .chart-period-btn.active { background: #3b82f6; color: #ffffff; }
+
+        .card-title { margin: 0 0 18px 0; font-size: 18px; font-weight: 800; color: var(--text-dark); display: flex; align-items: center; justify-content: space-between; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 700; color: var(--text-gray); margin-bottom: 8px; }
+        
+        .quick-group { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+        .quick-btn {
+            flex: 1; min-width: 60px; padding: 8px 6px; border: 1px solid var(--border); background: var(--input-bg);
+            border-radius: 10px; font-size: 12px; font-weight: 700; color: var(--text-gray); cursor: pointer; text-align: center;
+        }
+        .quick-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .quick-btn.tag-btn { flex: none; background: rgba(59, 130, 246, 0.1); color: var(--primary-dark); border-color: rgba(59, 130, 246, 0.3); }
+        .quick-btn.filter-btn { flex: none; padding: 6px 12px; font-size: 11px; border-radius: 20px; }
+
+        .input-wrapper { position: relative; display: flex; align-items: center; }
+        .form-group input {
+            width: 100%; padding: 13px 16px; font-size: 15px; font-weight: 700;
+            border: 1.5px solid var(--border); border-radius: 14px; outline: none; background: var(--input-bg); color: var(--text-dark);
+        }
+        .form-group input:focus { border-color: var(--primary); background: var(--card-bg); }
+        .unit-label { position: absolute; right: 16px; font-size: 13px; font-weight: 700; color: var(--text-light); pointer-events: none; }
+
+        .calc-preview {
+            background: rgba(59, 130, 246, 0.08); border: 1.5px dashed rgba(59, 130, 246, 0.3); color: var(--primary-dark);
+            padding: 14px; border-radius: 16px; margin-bottom: 18px;
+        }
+        .calc-mode-title { font-size: 12px; font-weight: 700; color: var(--text-gray); margin-bottom: 6px; }
+
+        .btn-submit {
+            width: 100%; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white;
+            border: none; padding: 15px; border-radius: 16px; font-size: 16px; font-weight: 800; cursor: pointer;
+            box-shadow: 0 8px 16px rgba(37, 99, 235, 0.25);
+        }
+        .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .btn-export {
+            background: var(--input-bg); border: 1px solid var(--border); color: var(--text-dark);
+            padding: 6px 12px; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer;
+        }
+
+        .history-item {
+            display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border);
+        }
+        .history-item:last-child { border-bottom: none; }
+        .history-info .rate-val { font-weight: 800; font-size: 15px; color: var(--text-dark); }
+        .history-info .date-memo { font-size: 12px; color: var(--text-gray); margin-top: 4px; font-weight: 600; }
+        .history-right { display: flex; align-items: center; gap: 8px; }
+        .amounts { text-align: right; }
+        .amounts .foreign-val { color: var(--accent-green); font-weight: 800; font-size: 15px; }
+        .amounts .krw-val { font-size: 11px; color: var(--text-light); }
+
+        .btn-delete { background: rgba(239, 68, 68, 0.1); color: var(--accent-red); border: none; padding: 6px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; cursor: pointer; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px);
+            display: none; justify-content: center; align-items: center; z-index: 1000;
+        }
+        .modal-card { background: var(--card-bg); width: 90%; max-width: 400px; border-radius: 24px; padding: 22px; border: 1px solid var(--border); }
+
+        .demo-notice-bar {
+            background: #fffbeeb0; border: 1px solid #fcd34d; color: #b45309;
+            padding: 10px 14px; border-radius: 14px; font-size: 12px; font-weight: 700; margin-bottom: 16px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+
+        .spinner-container { display: flex; justify-content: center; padding: 24px 0; }
+        .spinner { width: 28px; height: 28px; border: 3px solid var(--border); border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <div class="top-util-bar">
+        <button class="util-btn" id="demoToggleBtn" onclick="toggleDemoMode()">⚡ 데모 모드: OFF</button>
+        <div style="display:flex; gap:6px;">
+            <button class="util-btn" id="adminBtn" onclick="openAdminModal()">🔒 관리자</button>
+            <button class="util-btn" onclick="toggleDarkMode()" id="themeBtn">🌙 다크</button>
+        </div>
+    </div>
+
+    <div class="demo-notice-bar" id="demoNotice" style="display: none;">
+        <span>🧪 현재 체험(데모) 모드입니다. (임시 저장)</span>
+        <button onclick="toggleDemoMode()" style="border:none; background:transparent; color:#b45309; font-weight:800; cursor:pointer;">[종료]</button>
+    </div>
+
     <div class="tab-group">
         <button class="tab-btn active" id="tabUSD" onclick="switchCurrency('USD')">🇺🇸 미국 달러 (USD)</button>
         <button class="tab-btn" id="tabJPY" onclick="switchCurrency('JPY')">🇯🇵 일본 엔화 (JPY)</button>
     </div>
 
     <div class="card summary-card">
-        <div style="font-size:12px; color:#a5b4fc; font-weight:700;">📈 평균 환율</div>
-        <div class="avg-rate-val" id="avgRate">0.00 원</div>
-        
-        <div class="live-detail-bar">
-            <span>⚡ 실시간 환율</span>
-            <span id="liveRateDisplay" style="font-weight:800; color:#38bdf8;">동기화 중...</span>
+        <div class="summary-header">
+            <span class="summary-title" id="summaryTitle">📈 미국 달러 평균환율</span>
+            <div class="live-status-box">
+                <div class="live-badge" id="liveBadge">🟢 네이버 시세 연동</div>
+                <button class="refresh-btn" onclick="fetchLiveExchangeRates()" title="새로고침">🔄</button>
+            </div>
         </div>
 
-        <button class="chart-toggle-btn" onclick="toggleChart()">📊 환율 변동 추이 차트 <span id="chartArrow">▼</span></button>
+        <div class="avg-rate-val" id="avgRate">0.00 원</div>
+
+        <div class="profit-status-bar" id="profitStatusBar">
+            <span>📊 실시간 평가손익</span>
+            <span id="profitVal" style="color:#38bdf8;">계산 중...</span>
+        </div>
+
+        <div class="live-detail-bar">
+            <span>⚡ 네이버 실시간 환율</span>
+            <span class="rate-diff" id="liveRateDisplay">계산 중...</span>
+        </div>
+
+        <div class="target-rate-box" id="targetRateBox">
+            <span>🎯 목표 환율 설정</span>
+            <div>
+                <input type="text" id="targetRateInput" class="target-input" placeholder="1300" oninput="checkTargetRate()">
+                <span id="targetStatus" style="font-weight:700; margin-left:4px; color:#38bdf8;">-</span>
+            </div>
+        </div>
+
+        <div class="summary-grid">
+            <div class="info-box">
+                <span class="label">💰 총 보유 외화</span>
+                <span class="value-foreign" id="totalForeign">$0.00</span>
+            </div>
+            <div class="info-box">
+                <span class="label">💳 총 원화 투입금</span>
+                <span class="value-krw" id="totalKrw">0 원</span>
+            </div>
+        </div>
+
+        <button class="chart-toggle-btn" onclick="toggleChart()">
+            📊 환율 변동 추이 차트 <span id="chartArrow">▼</span>
+        </button>
+
         <div class="chart-container" id="chartContainer">
-            <canvas id="rateChart" style="width:100%; height:100%;"></canvas>
+            <div class="chart-period-group">
+                <button class="chart-period-btn" onclick="changeChartPeriod('today', this)">1일</button>
+                <button class="chart-period-btn" onclick="changeChartPeriod('3M', this)">3개월</button>
+                <button class="chart-period-btn active" onclick="changeChartPeriod('1Y', this)">1년</button>
+                <button class="chart-period-btn" onclick="changeChartPeriod('3Y', this)">3년</button>
+                <button class="chart-period-btn" onclick="changeChartPeriod('5Y', this)">5년</button>
+                <button class="chart-period-btn" onclick="changeChartPeriod('10Y', this)">10년</button>
+            </div>
+            <div style="position: relative; height: 150px; width: 100%;">
+                <canvas id="rateChart"></canvas>
+            </div>
         </div>
     </div>
 
     <div class="card">
-        <h3 style="margin-top:0;">✨ 환전 내역 추가</h3>
+        <h3 class="card-title">✨ 환전 내역 추가</h3>
+        
         <div class="form-group">
-            <label>📅 날짜</label>
+            <label>📅 환전 날짜</label>
+            <div class="quick-group">
+                <button class="quick-btn active" onclick="setQuickDate(0, this)">오늘</button>
+                <button class="quick-btn" onclick="setQuickDate(1, this)">어제</button>
+                <button class="quick-btn" onclick="setQuickDate(2, this)">그저께</button>
+            </div>
             <input type="date" id="inputDate">
         </div>
+
         <div class="form-group">
             <label>🇰🇷 원화 금액 (KRW)</label>
-            <input type="number" id="inputKrw" placeholder="예: 1000000">
+            <div class="input-wrapper">
+                <input type="text" id="inputKrw" placeholder="예: 1,000,000" oninput="onKrwInput(this)">
+                <span class="unit-label">원</span>
+            </div>
         </div>
+
         <div class="form-group">
-            <label>💱 적용 환율</label>
-            <input type="number" id="inputRate" step="0.01" placeholder="예: 1337.20">
+            <label id="foreignInputLabel">💵 외화 금액 (USD)</label>
+            <div class="input-wrapper">
+                <input type="text" id="inputForeign" placeholder="예: 500" oninput="onForeignInput(this)">
+                <span class="unit-label" id="foreignUnitLabel">$</span>
+            </div>
         </div>
+
         <div class="form-group">
-            <label>📝 메모</label>
-            <input type="text" id="inputMemo" placeholder="메모 입력">
+            <label id="rateLabel">💱 적용 환율 (원/$)</label>
+            <div class="input-wrapper">
+                <input type="text" id="inputRate" placeholder="예: 1,337.20" oninput="onRateInput(this)">
+                <span class="unit-label">원</span>
+            </div>
         </div>
-        <button class="btn-submit" id="submitBtn" onclick="addRecord()">기록하기</button>
+
+        <div class="calc-preview">
+            <div class="calc-mode-title" id="calcModeTitle">💡 실시간 자동 계산 결과</div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-weight:700;">예상 환전 금액</span>
+                <span style="font-size:19px; color:var(--primary); font-weight:800;" id="previewAmount">$0.00</span>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>📝 메모 (선택)</label>
+            <div class="quick-group">
+                <button class="quick-btn tag-btn" onclick="setMemoTag('주식투자')">📈 주식투자</button>
+                <button class="quick-btn tag-btn" onclick="setMemoTag('해외여행')">✈️ 해외여행</button>
+                <button class="quick-btn tag-btn" onclick="setMemoTag('생활/쇼핑')">🛍️ 쇼핑</button>
+                <button class="quick-btn tag-btn" onclick="setMemoTag('분할환전')">🧩 분할환전</button>
+                <button class="quick-btn tag-btn" onclick="setMemoTag('')">❌ 지우기</button>
+            </div>
+            <input type="text" id="inputMemo" placeholder="직접 입력하거나 위 태그 선택">
+        </div>
+
+        <button class="btn-submit" onclick="addRecord()" id="submitBtn">기록하기</button>
     </div>
 
     <div class="card">
-        <h3>📜 환전 히스토리</h3>
-        <div id="historyList"><div class="spinner-container"><div class="spinner"></div></div></div>
+        <div class="card-title">
+            <span>📜 환전 히스토리</span>
+            <button class="btn-export" onclick="exportToCSV()">📥 엑셀(CSV) 저장</button>
+        </div>
+
+        <div class="quick-group" style="margin-bottom:14px;">
+            <button class="quick-btn filter-btn active" onclick="filterHistory('ALL', this)">전체</button>
+            <button class="quick-btn filter-btn" onclick="filterHistory('주식투자', this)">📈 주식</button>
+            <button class="quick-btn filter-btn" onclick="filterHistory('해외여행', this)">✈️ 여행</button>
+            <button class="quick-btn filter-btn" onclick="filterHistory('생활/쇼핑', this)">🛍️ 쇼핑</button>
+            <button class="quick-btn filter-btn" onclick="filterHistory('분할환전', this)">🧩 분할</button>
+        </div>
+
+        <div id="historyList">
+            <div class="spinner-container"><div class="spinner"></div></div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="adminModal">
+    <div class="modal-card">
+        <h3 class="card-title" id="adminModalTitle">👑 관리자 인증</h3>
+        
+        <div id="adminLoginForm">
+            <div class="form-group">
+                <label>👤 관리자 아이디</label>
+                <input type="text" id="adminIdInput" placeholder="아이디 입력">
+            </div>
+            <div class="form-group">
+                <label>🔑 비밀번호</label>
+                <input type="password" id="adminPwInput" placeholder="비밀번호 입력">
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="btn-submit" style="background:#cbd5e1; color:#334155;" onclick="closeModal('adminModal')">취소</button>
+                <button class="btn-submit" onclick="loginAdmin()">로그인</button>
+            </div>
+        </div>
+
+        <div id="adminLoggedInView" style="display:none;">
+            <p style="font-size:14px; color:var(--text-gray); font-weight:700; margin-bottom:16px;">
+                ✅ 관리자로 로그인되었습니다.
+            </p>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+                <button class="btn-submit" style="background:#059669;" onclick="exportToCSV()">📥 전체 데이터 백업 (CSV)</button>
+                <button class="btn-submit" style="background:#dc2626;" onclick="logoutAdmin()">로그아웃</button>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxLzHYUcjhIvLYiM3n5GSrduGJxP6JmMJU38_ShYA5-8asYXSfoCAlehnBQ2YquxKej7Q/exec";
-    
+
+    const ADMIN_ID = "dldrjdwkd";
+    const ADMIN_PW = "tmdgjs18";
+
     let currentCurrency = 'USD';
     let rawData = null;
+    let liveRates = { USD: 1337.20, JPY: 910.50, prevUSD: 1336.50, prevJPY: 910.00 };
     let chartInstance = null;
+    let currentPeriod = '1Y';
+    let activeFilter = 'ALL';
+    let lastEditedField = 'KRW';
+    
+    let isDemoMode = false;
+    let isAdmin = false;
 
-    document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
+    let demoData = JSON.parse(localStorage.getItem('demoData')) || {
+        USD: {
+            summary: { avgRate: 1350.50, totalForeign: 500, totalKrw: 675250 },
+            history: [
+                { date: '2025-09-01', krw: 675250, rate: 1350.50, foreign: 500, memo: '📈 주식투자' },
+                { date: '2026-01-15', krw: 1360000, rate: 1360.00, foreign: 1000, memo: '분할환전' }
+            ]
+        },
+        JPY: {
+            summary: { avgRate: 910.00, totalForeign: 50000, totalKrw: 455000 },
+            history: [
+                { date: '2026-03-05', krw: 455000, rate: 910.00, foreign: 50000, memo: '✈️ 해외여행' }
+            ]
+        }
+    };
 
-    async function fetchLiveRate() {
+    setQuickDate(0);
+
+    if (localStorage.getItem('theme') === 'dark') {
+        document.body.classList.add('dark-mode');
+        document.getElementById('themeBtn').innerText = '☀️ 라이트';
+    }
+
+    function toggleDarkMode() {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        document.getElementById('themeBtn').innerText = isDark ? '☀️ 라이트' : '🌙 다크';
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    }
+
+    function toggleDemoMode() {
+        isDemoMode = !isDemoMode;
+        const btn = document.getElementById('demoToggleBtn');
+        const notice = document.getElementById('demoNotice');
+
+        if (isDemoMode) {
+            btn.innerText = '🧪 데모 모드: ON';
+            btn.classList.add('demo-active');
+            notice.style.display = 'flex';
+        } else {
+            btn.innerText = '⚡ 데모 모드: OFF';
+            btn.classList.remove('demo-active');
+            notice.style.display = 'none';
+        }
+
+        loadData();
+    }
+
+    function openAdminModal() {
+        document.getElementById('adminModal').style.display = 'flex';
+        if (isAdmin) {
+            document.getElementById('adminLoginForm').style.display = 'none';
+            document.getElementById('adminLoggedInView').style.display = 'block';
+        } else {
+            document.getElementById('adminLoginForm').style.display = 'block';
+            document.getElementById('adminLoggedInView').style.display = 'none';
+        }
+    }
+
+    function loginAdmin() {
+        const id = document.getElementById('adminIdInput').value.trim();
+        const pw = document.getElementById('adminPwInput').value.trim();
+
+        if (id === ADMIN_ID && pw === ADMIN_PW) {
+            isAdmin = true;
+            document.getElementById('adminBtn').innerText = '👑 인증됨';
+            document.getElementById('adminBtn').classList.add('admin-active');
+            alert('👑 관리자로 인증되었습니다.');
+            openAdminModal();
+            renderData();
+        } else {
+            alert('❌ 관리자 정보를 다시 확인해주세요.');
+        }
+    }
+
+    function logoutAdmin() {
+        isAdmin = false;
+        document.getElementById('adminBtn').innerText = '🔒 관리자';
+        document.getElementById('adminBtn').classList.remove('admin-active');
+        closeModal('adminModal');
+        renderData();
+    }
+
+    function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
+
+    function setQuickDate(daysAgo, btnEl = null) {
+        const d = new Date();
+        d.setDate(d.getDate() - daysAgo);
+        document.getElementById('inputDate').value = d.toISOString().split('T')[0];
+
+        if (btnEl) {
+            btnEl.parentElement.querySelectorAll('.quick-btn').forEach(b => b.classList.remove('active'));
+            btnEl.classList.add('active');
+        }
+    }
+
+    function setMemoTag(tag) { document.getElementById('inputMemo').value = tag; }
+
+    async function fetchLiveExchangeRates() {
         const displayEl = document.getElementById('liveRateDisplay');
+        displayEl.innerText = "네이버 시세 연동 중...";
+
         try {
             const res = await fetch(`${SCRIPT_URL}?action=getLiveRate&t=${Date.now()}`);
             const data = await res.json();
-            if (data && data[currentCurrency]) {
-                displayEl.innerText = `${Number(data[currentCurrency]).toLocaleString()} 원`;
-                if (!document.getElementById('inputRate').value) {
-                    document.getElementById('inputRate').value = data[currentCurrency];
+            
+            if (data && (data.USD || data.JPY)) {
+                if (data.USD) {
+                    liveRates.USD = Number(data.USD);
+                    liveRates.prevUSD = data.prevUSD ? Number(data.prevUSD) : liveRates.USD - 0.5;
                 }
-            } else {
-                displayEl.innerText = "조회 실패";
+                if (data.JPY) {
+                    liveRates.JPY = Number(data.JPY);
+                    liveRates.prevJPY = data.prevJPY ? Number(data.prevJPY) : liveRates.JPY - 0.2;
+                }
             }
         } catch (e) {
-            displayEl.innerText = "연동 에러";
-        }
-    }
-
-    async function loadData() {
-        try {
-            const res = await fetch(`${SCRIPT_URL}?t=${Date.now()}`);
-            rawData = await res.json();
-            renderData();
+            console.warn("실시간 연동 기본값 유지");
+        } finally {
+            updateLiveRateUI();
+            checkTargetRate();
+            calculateProfitLoss();
             if (document.getElementById('chartContainer').style.display === 'block') {
                 renderChart();
             }
-        } catch (err) {
-            document.getElementById('historyList').innerText = '데이터 로드 실패';
         }
     }
 
-    function renderData() {
-        if (!rawData) return;
-        const summary = rawData[currentCurrency]?.summary || { avgRate: 0 };
-        const history = rawData[currentCurrency]?.history || [];
+    function updateLiveRateUI() {
+        const current = liveRates[currentCurrency];
+        const prev = currentCurrency === 'USD' ? liveRates.prevUSD : liveRates.prevJPY;
+        const diff = current - prev;
+        const percent = prev > 0 ? (diff / prev) * 100 : 0;
 
-        document.getElementById('avgRate').innerText = summary.avgRate.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' 원';
+        const displayEl = document.getElementById('liveRateDisplay');
+        const symbol = currentCurrency === 'USD' ? '원' : '원/100엔';
 
-        const listEl = document.getElementById('historyList');
-        if (history.length === 0) {
-            listEl.innerHTML = '<div style="text-align:center; padding:20px; color:#94a3b8;">내역이 없습니다.</div>';
+        if (current > 0) {
+            const isUp = diff >= 0;
+            const diffText = `${isUp ? '▲' : '▼'}${Math.abs(diff).toFixed(2)} (${Math.abs(percent).toFixed(2)}%)`;
+            displayEl.className = `rate-diff ${isUp ? 'up' : 'down'}`;
+            displayEl.innerHTML = `${current.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}${symbol} <small style="font-size:11px;">(${diffText})</small>`;
+            
+            const inputRate = document.getElementById('inputRate');
+            if(!inputRate.value) {
+                inputRate.value = current.toFixed(2);
+            }
+        }
+    }
+
+    function calculateProfitLoss() {
+        const summary = isDemoMode ? demoData[currentCurrency]?.summary : rawData?.[currentCurrency]?.summary;
+        if (!summary) return;
+
+        const current = liveRates[currentCurrency];
+        const profitEl = document.getElementById('profitVal');
+
+        if (!summary.avgRate || !current || !summary.totalForeign) {
+            profitEl.innerText = '-';
             return;
         }
 
-        let html = '';
-        history.slice().reverse().forEach((item, idx) => {
-            html += `
-                <div class="history-item">
-                    <div>
-                        <div style="font-weight:800;">${Number(item.rate).toLocaleString()} 원</div>
-                        <div style="font-size:12px; color:#94a3b8;">${item.date.substring(0,10)} ${item.memo ? '· ' + item.memo : ''}</div>
-                    </div>
-                    <div style="text-align:right;">
-                        <div style="color:#34d399; font-weight:800;">+${Number(item.foreign).toLocaleString()}</div>
-                        <div style="font-size:11px; color:#94a3b8;">${Number(item.krw).toLocaleString()} 원</div>
-                    </div>
-                </div>`;
-        });
-        listEl.innerHTML = html;
+        const diffPerUnit = current - summary.avgRate;
+        let totalDiff = currentCurrency === 'USD' ? (diffPerUnit * summary.totalForeign) : ((diffPerUnit / 100) * summary.totalForeign);
+        const percent = (diffPerUnit / summary.avgRate) * 100;
+        const isProfit = totalDiff >= 0;
+
+        profitEl.innerText = `${isProfit ? '+' : ''}${Math.round(totalDiff).toLocaleString()}원 (${isProfit ? '+' : ''}${percent.toFixed(2)}%) ${isProfit ? '🎉' : '📉'}`;
+        profitEl.style.color = isProfit ? '#34d399' : '#f87171';
+    }
+
+    function checkTargetRate() {
+        const target = parseFloat(document.getElementById('targetRateInput').value);
+        const current = liveRates[currentCurrency];
+        const statusEl = document.getElementById('targetStatus');
+        const boxEl = document.getElementById('targetRateBox');
+
+        if (!target || !current) {
+            statusEl.innerText = '-';
+            boxEl.classList.remove('reached');
+            return;
+        }
+
+        if (current <= target) {
+            statusEl.innerText = '🔥 도달!';
+            statusEl.style.color = '#34d399';
+            boxEl.classList.add('reached');
+        } else {
+            statusEl.innerText = '⏳ 대기';
+            statusEl.style.color = '#f87171';
+            boxEl.classList.remove('reached');
+        }
     }
 
     function toggleChart() {
         const container = document.getElementById('chartContainer');
-        const isHidden = container.style.display !== 'block';
-        container.style.display = isHidden ? 'block' : 'none';
-        document.getElementById('chartArrow').innerText = isHidden ? '▲' : '▼';
-        if (isHidden) setTimeout(renderChart, 50);
+        const arrow = document.getElementById('chartArrow');
+        if (container.style.display === 'block') {
+            container.style.display = 'none';
+            arrow.innerText = '▼';
+        } else {
+            container.style.display = 'block';
+            arrow.innerText = '▲';
+            setTimeout(() => renderChart(), 100);
+        }
+    }
+
+    function changeChartPeriod(period, btnEl) {
+        currentPeriod = period;
+        if (btnEl) {
+            btnEl.parentElement.querySelectorAll('.chart-period-btn').forEach(b => b.classList.remove('active'));
+            btnEl.classList.add('active');
+        }
+        renderChart();
     }
 
     function renderChart() {
@@ -182,11 +775,17 @@
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
 
-        const history = rawData?.[currentCurrency]?.history || [];
-        if (history.length === 0) return;
+        const activeData = isDemoMode ? demoData[currentCurrency] : (rawData ? rawData[currentCurrency] : null);
+        
+        if (!activeData || !activeData.history || activeData.history.length === 0) {
+            if (chartInstance) chartInstance.destroy();
+            return;
+        }
 
-        const labels = history.map(h => h.date.substring(0, 10));
-        const dataPoints = history.map(h => Number(h.rate));
+        let historyList = [...activeData.history].sort((a, b) => new Date(a.date) - new Date(b.date));
+
+        const labels = historyList.map(item => item.date ? item.date.toString().substring(0, 10) : '');
+        const chartData = historyList.map(item => Number(item.rate));
 
         if (chartInstance) {
             chartInstance.destroy();
@@ -197,12 +796,15 @@
             data: {
                 labels: labels,
                 datasets: [{
-                    label: '환율 추이',
-                    data: dataPoints,
+                    label: `${currentCurrency} 환율`,
+                    data: chartData,
                     borderColor: '#38bdf8',
-                    backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                    borderWidth: 2,
+                    backgroundColor: 'rgba(56, 189, 248, 0.15)',
                     fill: true,
-                    tension: 0.2
+                    tension: 0.2,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#ffffff'
                 }]
             },
             options: {
@@ -210,21 +812,168 @@
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                    x: { ticks: { color: '#94a3b8' } },
-                    y: { ticks: { color: '#94a3b8' } }
+                    x: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { display: false } },
+                    y: { ticks: { color: '#94a3b8', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.08)' } }
                 }
             }
         });
     }
 
+    function switchCurrency(curr) {
+        currentCurrency = curr;
+        document.getElementById('tabUSD').classList.toggle('active', curr === 'USD');
+        document.getElementById('tabJPY').classList.toggle('active', curr === 'JPY');
+        
+        if(curr === 'USD') {
+            document.getElementById('summaryTitle').innerText = '📈 미국 달러 평균환율';
+            document.getElementById('rateLabel').innerText = '💱 적용 환율 (원/$)';
+            document.getElementById('foreignInputLabel').innerText = '💵 외화 금액 (USD)';
+            document.getElementById('foreignUnitLabel').innerText = '$';
+            document.getElementById('targetRateInput').placeholder = "1300";
+        } else {
+            document.getElementById('summaryTitle').innerText = '📈 일본 엔화 평균환율 (100엔당)';
+            document.getElementById('rateLabel').innerText = '💱 적용 환율 (원/100엔)';
+            document.getElementById('foreignInputLabel').innerText = '💴 외화 금액 (JPY)';
+            document.getElementById('foreignUnitLabel').innerText = '¥';
+            document.getElementById('targetRateInput').placeholder = "900";
+        }
+        updateLiveRateUI();
+        checkTargetRate();
+        calculateProfitLoss();
+        recalculate();
+        renderData();
+        if (document.getElementById('chartContainer').style.display === 'block') {
+            renderChart();
+        }
+    }
+
+    function formatNumberInput(input, isRate = false) {
+        let val = input.value.replace(/[^0-9.]/g, '');
+        const parts = val.split('.');
+        if (parts.length > 2) val = parts[0] + '.' + parts.slice(1).join('');
+
+        if (val) {
+            if (isRate) {
+                input.value = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",") + (parts[1] !== undefined ? '.' + parts[1] : '');
+            } else {
+                input.value = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            }
+        } else {
+            input.value = '';
+        }
+    }
+
+    function onKrwInput(el) { lastEditedField = 'KRW'; formatNumberInput(el); recalculate(); }
+    function onForeignInput(el) { lastEditedField = 'FOREIGN'; formatNumberInput(el); recalculate(); }
+    function onRateInput(el) { formatNumberInput(el, true); recalculate(); }
+
+    function recalculate() {
+        const krwEl = document.getElementById('inputKrw');
+        const foreignEl = document.getElementById('inputForeign');
+        const rateEl = document.getElementById('inputRate');
+        const previewEl = document.getElementById('previewAmount');
+
+        const krw = parseFloat(krwEl.value.replace(/,/g, '')) || 0;
+        const foreign = parseFloat(foreignEl.value.replace(/,/g, '')) || 0;
+        const rate = parseFloat(rateEl.value.replace(/,/g, '')) || 0;
+
+        if (rate <= 0) {
+            previewEl.innerText = currentCurrency === 'USD' ? '$0.00' : '¥0';
+            return;
+        }
+
+        if (lastEditedField === 'KRW' && krw > 0) {
+            let calcForeign = currentCurrency === 'USD' ? (krw / rate) : ((krw / rate) * 100);
+            foreignEl.value = calcForeign.toLocaleString('en-US', {maximumFractionDigits: 2});
+            previewEl.innerText = (currentCurrency === 'USD' ? '$' : '¥') + calcForeign.toLocaleString(undefined, {maximumFractionDigits: 2});
+        } else if (lastEditedField === 'FOREIGN' && foreign > 0) {
+            let calcKrw = currentCurrency === 'USD' ? (foreign * rate) : ((foreign / 100) * rate);
+            krwEl.value = Math.round(calcKrw).toLocaleString();
+            previewEl.innerText = (currentCurrency === 'USD' ? '$' : '¥') + foreign.toLocaleString();
+        }
+    }
+
+    async function loadData() {
+        if (isDemoMode) {
+            rawData = demoData;
+            renderData();
+            calculateProfitLoss();
+            if (document.getElementById('chartContainer').style.display === 'block') renderChart();
+            return;
+        }
+
+        try {
+            const res = await fetch(`${SCRIPT_URL}?t=${Date.now()}`);
+            rawData = await res.json();
+            renderData();
+            calculateProfitLoss();
+            if (document.getElementById('chartContainer').style.display === 'block') renderChart();
+        } catch (err) {
+            document.getElementById('historyList').innerText = '데이터를 불러오지 못했습니다.';
+        }
+    }
+
+    function filterHistory(tag, btnEl) {
+        activeFilter = tag;
+        btnEl.parentElement.querySelectorAll('.quick-btn').forEach(b => b.classList.remove('active'));
+        btnEl.classList.add('active');
+        renderData();
+    }
+
+    function renderData() {
+        const summary = isDemoMode ? demoData[currentCurrency]?.summary : rawData?.[currentCurrency]?.summary || { avgRate: 0, totalForeign: 0, totalKrw: 0 };
+        const history = isDemoMode ? demoData[currentCurrency]?.history : rawData?.[currentCurrency]?.history || [];
+        const symbol = currentCurrency === 'USD' ? '$' : '¥';
+        
+        document.getElementById('avgRate').innerText = (summary?.avgRate || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' 원';
+        document.getElementById('totalForeign').innerText = symbol + (summary?.totalForeign || 0).toLocaleString(undefined, {maximumFractionDigits: 2});
+        document.getElementById('totalKrw').innerText = (summary?.totalKrw || 0).toLocaleString() + ' 원';
+
+        const listEl = document.getElementById('historyList');
+        
+        const filteredHistory = history.filter(item => {
+            if (activeFilter === 'ALL') return true;
+            return (item.memo || '').includes(activeFilter);
+        });
+
+        if (filteredHistory.length === 0) {
+            listEl.innerHTML = '<div style="color:var(--text-light); text-align:center; padding: 24px 0; font-weight:600;">기록된 내역이 없습니다.</div>';
+            return;
+        }
+
+        let html = '';
+        filteredHistory.slice().reverse().forEach((item, index) => {
+            let dStr = item.date ? item.date.toString().substring(0, 10) : '';
+            html += `
+                <div class="history-item">
+                    <div class="history-info">
+                        <div class="rate-val">${Number(item.rate).toLocaleString()} 원</div>
+                        <div class="date-memo">🗓️ ${dStr} ${item.memo ? '· 📝 ' + item.memo : ''}</div>
+                    </div>
+                    <div class="history-right">
+                        <div class="amounts">
+                            <div class="foreign-val">+${symbol}${Number(item.foreign).toLocaleString(undefined, {maximumFractionDigits: 2})}</div>
+                            <div class="krw-val">${Number(item.krw).toLocaleString()} 원</div>
+                        </div>
+                        <div>
+                            <button class="btn-delete" onclick="deleteRecord('${currentCurrency}', ${history.length - 1 - index})">삭제</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        listEl.innerHTML = html;
+    }
+
     async function addRecord() {
         const date = document.getElementById('inputDate').value;
-        const krw = document.getElementById('inputKrw').value;
-        const rate = document.getElementById('inputRate').value;
+        const krw = document.getElementById('inputKrw').value.replace(/,/g, '');
+        const rate = document.getElementById('inputRate').value.replace(/,/g, '');
         const memo = document.getElementById('inputMemo').value;
 
         if (!date || !krw || !rate) {
-            alert('날짜, 원화 금액, 환율을 모두 입력해주세요.');
+            alert('날짜, 원화 금액, 환율을 모두 입력해 주세요!');
             return;
         }
 
@@ -232,35 +981,70 @@
         btn.innerText = '저장 중...';
         btn.disabled = true;
 
-        document.getElementById('historyList').innerHTML = '<div class="spinner-container"><div class="spinner"></div></div>';
-
-        try {
-            await fetch(`${SCRIPT_URL}?action=add&currency=${currentCurrency}&date=${date}&krw=${krw}&rate=${rate}&memo=${encodeURIComponent(memo)}`, { mode: 'no-cors' });
-            await new Promise(resolve => setTimeout(resolve, 1500));
-            await loadData();
+        if (isDemoMode) {
+            let foreign = currentCurrency === 'USD' ? (Number(krw) / Number(rate)) : ((Number(krw) / Number(rate)) * 100);
+            demoData[currentCurrency].history.push({
+                date, krw: Number(krw), rate: Number(rate), foreign, memo
+            });
+            localStorage.setItem('demoData', JSON.stringify(demoData));
+            loadData();
+        } else {
+            document.getElementById('historyList').innerHTML = '<div class="spinner-container"><div class="spinner"></div></div>';
             
-            document.getElementById('inputKrw').value = '';
-            document.getElementById('inputMemo').value = '';
-        } catch(e) {
-            alert('저장 중 오류가 발생했습니다.');
-        } finally {
-            btn.innerText = '기록하기';
-            btn.disabled = false;
+            // 시트 저장 처리 및 동기화 지연시간 보장
+            await fetch(`${SCRIPT_URL}?action=add&currency=${currentCurrency}&date=${date}&krw=${krw}&rate=${rate}&memo=${encodeURIComponent(memo)}`, { mode: 'no-cors' });
+            await new Promise(r => setTimeout(r, 2000));
+            await loadData();
+        }
+
+        document.getElementById('inputKrw').value = '';
+        document.getElementById('inputForeign').value = '';
+        document.getElementById('inputMemo').value = '';
+        recalculate();
+        
+        btn.innerText = '기록하기';
+        btn.disabled = false;
+    }
+
+    async function deleteRecord(currency, index) {
+        if (!confirm('정말 삭제하시겠습니까?')) return;
+        document.getElementById('historyList').innerHTML = '<div class="spinner-container"><div class="spinner"></div></div>';
+        
+        if (isDemoMode) {
+            demoData[currency].history.splice(index, 1);
+            localStorage.setItem('demoData', JSON.stringify(demoData));
+            loadData();
+        } else {
+            await fetch(`${SCRIPT_URL}?action=delete&currency=${currency}&index=${index}`, { mode: 'no-cors' });
+            await new Promise(r => setTimeout(r, 2000));
+            await loadData();
         }
     }
 
-    function switchCurrency(curr) {
-        currentCurrency = curr;
-        document.getElementById('tabUSD').classList.toggle('active', curr === 'USD');
-        document.getElementById('tabJPY').classList.toggle('active', curr === 'JPY');
-        document.getElementById('inputRate').value = '';
-        fetchLiveRate();
-        renderData();
-        if (document.getElementById('chartContainer').style.display === 'block') renderChart();
+    function exportToCSV() {
+        const history = isDemoMode ? demoData[currentCurrency]?.history : rawData?.[currentCurrency]?.history || [];
+        if (history.length === 0) {
+            alert('저장된 내역이 없습니다.');
+            return;
+        }
+
+        let csvContent = "\uFEFF날짜,원화금액(KRW),적용환율,외화금액,메모\n";
+        history.forEach(row => {
+            csvContent += `"${row.date}","${row.krw}","${row.rate}","${row.foreign}","${row.memo || ''}"\n`;
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.setAttribute("download", `${currentCurrency}_환전내역_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 
-    fetchLiveRate();
+    fetchLiveExchangeRates();
     loadData();
 </script>
+
 </body>
 </html>
