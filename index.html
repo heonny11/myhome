@@ -5,16 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>환율 계산기</title>
     
-    <!-- 📱 스마트폰 홈 화면 추가 시 아이콘 및 웹앱 이름 설정 -->
     <meta name="apple-mobile-web-app-title" content="환율 계산기">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
-    <!-- 홈 화면 아이콘 -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔀</text></svg>">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💵</text></svg>">
 
-    <!-- Chart.js 라이브러리 -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
@@ -55,7 +52,7 @@
             margin: 0;
             padding: 20px 16px;
             color: var(--text-dark);
-            transition: background-color 0.3s, color 0.3s;
+            transition: background-color 0.2s, color 0.2s;
         }
 
         .container { max-width: 480px; margin: 0 auto; }
@@ -81,16 +78,8 @@
             align-items: center;
             gap: 4px;
         }
-        .util-btn.demo-active {
-            background: #fef3c7;
-            color: #d97706;
-            border-color: #f59e0b;
-        }
-        .util-btn.admin-active {
-            background: #dbeafe;
-            color: #1d4ed8;
-            border-color: #3b82f6;
-        }
+        .util-btn.demo-active { background: #fef3c7; color: #d97706; border-color: #f59e0b; }
+        .util-btn.admin-active { background: #dbeafe; color: #1d4ed8; border-color: #3b82f6; }
 
         .tab-group {
             display: flex;
@@ -143,11 +132,7 @@
         }
         .summary-title { font-size: 13px; color: #a5b4fc; font-weight: 700; }
         
-        .live-status-box {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+        .live-status-box { display: flex; align-items: center; gap: 8px; }
         .live-badge {
             background: rgba(16, 185, 129, 0.2);
             color: #34d399;
@@ -292,10 +277,7 @@
             text-align: center;
             min-width: 38px;
         }
-        .chart-period-btn.active {
-            background: #3b82f6;
-            color: #ffffff;
-        }
+        .chart-period-btn.active { background: #3b82f6; color: #ffffff; }
 
         .card-title { margin: 0 0 18px 0; font-size: 18px; font-weight: 800; color: var(--text-dark); display: flex; align-items: center; justify-content: space-between; }
         .form-group { margin-bottom: 16px; }
@@ -329,7 +311,9 @@
             width: 100%; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white;
             border: none; padding: 15px; border-radius: 16px; font-size: 16px; font-weight: 800; cursor: pointer;
             box-shadow: 0 8px 16px rgba(37, 99, 235, 0.25);
+            transition: opacity 0.2s;
         }
+        .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
 
         .btn-export {
             background: var(--input-bg); border: 1px solid var(--border); color: var(--text-dark);
@@ -601,7 +585,7 @@
 
         <div id="adminLoggedInView" style="display:none;">
             <p style="font-size:14px; color:var(--text-gray); font-weight:700; margin-bottom:16px;">
-                ✅ <strong style="color:var(--primary);">dldrjdwkd</strong> 님으로 인증되었습니다. 전체 내역 편집 및 백업 관리 권한이 부여되었습니다.
+                ✅ <strong style="color:var(--primary);">dldrjdwkd</strong> 님으로 인증되었습니다.
             </p>
             <div style="display:flex; flex-direction:column; gap:10px;">
                 <button class="btn-submit" style="background:#059669;" onclick="exportToCSV()">📥 전체 데이터 백업 (CSV)</button>
@@ -726,13 +710,11 @@
     function setMemoTag(tag) { document.getElementById('inputMemo').value = tag; }
     function setModalMemoTag(tag) { document.getElementById('editMemo').value = tag; }
 
-    // 🇰🇷 네이버 금융 시세 기반 고정밀 실시간 환율 호출 로직
     async function fetchLiveExchangeRates() {
         const displayEl = document.getElementById('liveRateDisplay');
         displayEl.innerText = "네이버 시세 동기화 중...";
 
         try {
-            // 브라우저 캐시를 무력화하기 위한 타임스탬프 쿼리
             const cacheBuster = new Date().getTime();
             const res = await fetch(`https://api.exchangerate-api.com/v4/latest/USD?t=${cacheBuster}`, {
                 cache: 'no-store'
@@ -740,10 +722,7 @@
             const data = await res.json();
             
             if (data && data.rates) {
-                // 국내 외환시장 실시간 보정치 적용 (네이버 금융 매매기준율 동기화)
                 const baseUsdRate = data.rates.KRW;
-                
-                // 국내 외환시장 오차 보정 (-3.0원 네이버 지수 연동)
                 liveRates.USD = Number((baseUsdRate - 2.85).toFixed(2)); 
                 liveRates.JPY = Number(((liveRates.USD / data.rates.JPY) * 100).toFixed(2));
                 
@@ -776,7 +755,6 @@
             displayEl.className = `rate-diff ${isUp ? 'up' : 'down'}`;
             displayEl.innerHTML = `${current.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}${symbol} <small style="font-size:11px;">(${diffText})</small>`;
             
-            // 입력창 기본 환율 자동 채우기
             const inputRate = document.getElementById('inputRate');
             if(!inputRate.value) {
                 inputRate.value = current.toFixed(2);
@@ -867,20 +845,20 @@
                 labels = ['09:00', '10:30', '12:00', '13:30', '15:00', '16:30', '현재'];
                 chartData = [currRate + 4.2, currRate + 2.5, currRate - 1.2, currRate + 3.0, currRate - 2.8, currRate - 0.5, currRate];
             } else if (currentPeriod === '3M') {
-                labels = ['6월 (고점)', '7월 초', '7월 말', '8월 초', '8월 말', '9월 현재'];
+                labels = ['6월', '7월 초', '7월 말', '8월 초', '8월 말', '현재'];
                 chartData = [1561.5, 1510.0, 1450.2, 1395.0, 1362.4, currRate];
             } else if (currentPeriod === '1Y') {
-                labels = ['25년 9월', '10월', '11월', '12월', '26년 1월', '2월', '3월', '4월', '5월', '6월 (최고)', '7월', '8월', '9월 (현재)'];
-                chartData = [1352.0, 1385.5, 1412.0, 1435.0, 1410.2, 1428.5, 1465.0, 1492.0, 1515.0, 1561.5, 1485.0, 1390.5, currRate];
+                labels = ['25년 9월', '11월', '26년 1월', '3월', '5월', '7월', '현재'];
+                chartData = [1352.0, 1412.0, 1410.2, 1465.0, 1515.0, 1485.0, currRate];
             } else if (currentPeriod === '3Y') {
-                labels = ['23년', '24년 상반기', '24년 하반기', '25년 상반기', '25년 하반기', '26년 6월', '현재'];
-                chartData = [1295.0, 1360.0, 1380.0, 1345.0, 1410.0, 1561.5, currRate];
+                labels = ['23년', '24년', '25년', '26년', '현재'];
+                chartData = [1295.0, 1380.0, 1410.0, 1561.5, currRate];
             } else if (currentPeriod === '5Y') {
-                labels = ['21년', '22년 (강달러)', '23년', '24년', '25년', '26년 6월', '현재'];
-                chartData = [1140.0, 1442.0, 1305.0, 1370.0, 1410.0, 1561.5, currRate];
+                labels = ['21년', '22년', '23년', '24년', '25년', '현재'];
+                chartData = [1140.0, 1442.0, 1305.0, 1370.0, 1410.0, currRate];
             } else if (currentPeriod === '10Y') {
-                labels = ['16년', '18년', '20년', '22년', '24년', '26년 6월', '현재'];
-                chartData = [1152.0, 1070.0, 1180.0, 1442.0, 1380.0, 1561.5, currRate];
+                labels = ['16년', '18년', '20년', '22년', '24년', '현재'];
+                chartData = [1152.0, 1070.0, 1180.0, 1442.0, 1380.0, currRate];
             }
         } else {
             if (currentPeriod === 'today') {
@@ -1061,7 +1039,8 @@
         }
 
         try {
-            const res = await fetch(SCRIPT_URL);
+            const cacheBuster = new Date().getTime();
+            const res = await fetch(`${SCRIPT_URL}?t=${cacheBuster}`);
             rawData = await res.json();
             renderData();
             calculateProfitLoss();
@@ -1144,7 +1123,10 @@
                 </div>
             `;
 
-            groupedHistory[year].items.reverse().forEach(item => {
+            // 최신 기록이 맨 위로 오도록 내림차순 정렬
+            const sortedItems = groupedHistory[year].items.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            sortedItems.forEach(item => {
                 let dStr = item.date ? item.date.toString().substring(0, 10) : '';
                 html += `
                     <div class="history-item">
@@ -1198,8 +1180,11 @@
 
     async function sendRequest(params) {
         const query = new URLSearchParams(params).toString();
+        // CORS 및 백엔드 반영 지연 우회를 위해 구글 스크립트 전송 방식 최적화
         await fetch(`${SCRIPT_URL}?${query}`, { mode: 'no-cors' });
-        await new Promise(r => setTimeout(r, 1200));
+        
+        // 데이터가 구글 시트에 완전히 쓰여질 수 있도록 간격 부여 후 동기화
+        await new Promise(r => setTimeout(r, 1500));
         await loadData();
     }
 
@@ -1226,7 +1211,8 @@
             recalculateDemoSummary(currentCurrency);
             loadData();
         } else {
-            await sendRequest({ action: 'add', currency: currentCurrency, date, krw, rate, memo });
+            document.getElementById('historyList').innerHTML = '<div class="spinner-container"><div class="spinner"></div></div>';
+            await sendRequest({ action: 'add', currency: currentCurrency, date, krw, rate, memo: encodeURIComponent(memo) });
         }
 
         document.getElementById('inputKrw').value = '';
@@ -1272,7 +1258,7 @@
             recalculateDemoSummary(currentCurrency);
             loadData();
         } else {
-            await sendRequest({ action: 'update', currency: currentCurrency, index, date, krw, rate, memo });
+            await sendRequest({ action: 'update', currency: currentCurrency, index, date, krw, rate, memo: encodeURIComponent(memo) });
         }
     }
 
