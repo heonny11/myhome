@@ -5,45 +5,115 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>토스증권 환전 & 평균환율 계산기</title>
     <style>
+        :root {
+            --primary: #3182f6;
+            --primary-bg: #e8f3ff;
+            --bg: #f2f4f6;
+            --card-bg: #ffffff;
+            --text-main: #191f28;
+            --text-sub: #8b95a1;
+            --danger: #f04452;
+            --border: #e5e8eb;
+        }
+
+        * { box-sizing: border-box; }
+        
         body {
             font-family: 'Apple SD Gothic Neo', -apple-system, sans-serif;
-            background-color: #f2f4f6;
+            background-color: var(--bg);
             margin: 0;
-            padding: 20px;
-            color: #191f28;
+            padding: 16px;
+            color: var(--text-main);
         }
+
         .container {
-            max-width: 500px;
+            max-width: 480px;
             margin: 0 auto;
         }
+
+        /* 탭 스타일 */
+        .tab-group {
+            display: flex;
+            background: #e5e8eb;
+            padding: 4px;
+            border-radius: 14px;
+            margin-bottom: 16px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: bold;
+            color: var(--text-sub);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        /* 카드 공통 */
         .card {
-            background: #ffffff;
+            background: var(--card-bg);
             border-radius: 20px;
             padding: 20px;
             margin-bottom: 16px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.04);
         }
+
+        /* 요약 카드 */
         .summary-card {
-            background: #3182f6;
+            background: linear-gradient(135deg, #2b78e4, #1b64cb);
             color: white;
         }
-        .summary-title {
-            font-size: 14px;
-            opacity: 0.9;
-            margin-bottom: 8px;
-        }
-        .avg-rate {
-            font-size: 32px;
-            font-weight: 800;
-            margin-bottom: 16px;
-        }
-        .sub-info {
+        .summary-header {
             display: flex;
             justify-content: space-between;
-            font-size: 14px;
-            border-top: 1px solid rgba(255,255,255,0.2);
-            padding-top: 12px;
+            align-items: center;
+            margin-bottom: 6px;
+            font-size: 13px;
+            opacity: 0.9;
         }
+        .live-rate-tag {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 8px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .avg-rate {
+            font-size: 30px;
+            font-weight: 800;
+            margin-bottom: 18px;
+            letter-spacing: -0.5px;
+        }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            padding-top: 14px;
+        }
+        .info-box {
+            display: flex;
+            flex-direction: column;
+        }
+        .info-box .label {
+            font-size: 12px;
+            opacity: 0.8;
+            margin-bottom: 4px;
+        }
+        .info-box .value {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        /* 폼 요소 */
         .form-group {
             margin-bottom: 14px;
         }
@@ -54,21 +124,50 @@
             color: #4e5968;
             margin-bottom: 6px;
         }
-        .form-group input {
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .form-group input, .form-group select {
             width: 100%;
-            padding: 12px;
+            padding: 12px 14px;
             font-size: 16px;
-            border: 1px solid #d1d6db;
-            border-radius: 10px;
-            box-sizing: border-box;
+            border: 1px solid var(--border);
+            border-radius: 12px;
             outline: none;
+            transition: border-color 0.2s;
+            background: #f9fafb;
         }
-        .form-group input:focus {
-            border-color: #3182f6;
+        .form-group input:focus, .form-group select:focus {
+            border-color: var(--primary);
+            background: #fff;
         }
+        .unit-label {
+            position: absolute;
+            right: 14px;
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--text-sub);
+            pointer-events: none;
+        }
+
+        /* 실시간 계산 결과 미리보기 */
+        .calc-preview {
+            background: var(--primary-bg);
+            color: var(--primary);
+            padding: 12px 14px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 14px;
+            display: flex;
+            justify-content: space-between;
+        }
+
         .btn {
             width: 100%;
-            background-color: #3182f6;
+            background-color: var(--primary);
             color: white;
             border: none;
             padding: 14px;
@@ -76,209 +175,280 @@
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
+            transition: opacity 0.2s;
         }
-        .btn-danger {
-            background-color: #f04452;
-        }
-        .btn-secondary {
-            background-color: #8b95a1;
-        }
+        .btn:active { opacity: 0.8; }
+        .btn:disabled { background: #b0b8c1; cursor: not-allowed; }
+
+        /* 히스토리 항목 */
         .history-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 14px 0;
-            border-bottom: 1px solid #f2f4f6;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
         }
-        .history-item:last-child {
-            border-bottom: none;
-        }
-        .date-memo {
-            font-size: 13px;
-            color: #8b95a1;
-            margin-top: 2px;
-        }
-        .amounts {
-            text-align: right;
-            font-weight: bold;
-        }
-        .usd-val {
-            color: #3182f6;
-        }
-        .action-btns {
-            display: flex;
-            gap: 6px;
-            margin-top: 6px;
-            justify-content: flex-end;
-        }
-        .action-btn {
-            font-size: 11px;
-            padding: 4px 8px;
-            border-radius: 6px;
+        .history-item:last-child { border-bottom: none; }
+        .history-info .rate { font-weight: bold; font-size: 15px; }
+        .history-info .date-memo { font-size: 12px; color: var(--text-sub); margin-top: 2px; }
+        .history-right { display: flex; align-items: center; gap: 12px; }
+        .amounts { text-align: right; }
+        .amounts .foreign-val { color: var(--primary); font-weight: bold; font-size: 15px; }
+        .amounts .krw-val { font-size: 12px; color: var(--text-sub); }
+        .btn-delete {
+            background: #fef2f2;
+            color: var(--danger);
             border: none;
-            cursor: pointer;
-            background: #f2f4f6;
-            color: #4e5968;
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 12px;
             font-weight: bold;
+            cursor: pointer;
         }
-        .action-btn.del {
-            color: #f04452;
-            background: #ffebee;
-        }
-        /* Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.4);
+
+        /* 로딩 스피너 */
+        .spinner-container {
+            display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 1000;
+            padding: 30px 0;
         }
-        .modal-content {
-            background: white;
-            padding: 24px;
-            border-radius: 20px;
-            width: 90%;
-            max-width: 400px;
-            box-sizing: border-box;
+        .spinner {
+            width: 28px;
+            height: 28px;
+            border: 3px solid var(--border);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
         }
-        .modal-btns {
-            display: flex;
-            gap: 8px;
-            margin-top: 20px;
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- 요약 대시보드 -->
+    <!-- 通貨 탭 선택 (USD / JPY) -->
+    <div class="tab-group">
+        <button class="tab-btn active" id="tabUSD" onclick="switchCurrency('USD')">🇺🇸 미국 달러 (USD)</button>
+        <button class="tab-btn" id="tabJPY" onclick="switchCurrency('JPY')">🇯🇵 일본 엔화 (JPY)</button>
+    </div>
+
+    <!-- 요약 카드 -->
     <div class="card summary-card">
-        <div class="summary-title">평균 환율 (평단가)</div>
+        <div class="summary-header">
+            <span id="summaryTitle">미국 달러 평균환율</span>
+            <span class="live-rate-tag" id="liveRate">실시간: ---원</span>
+        </div>
         <div class="avg-rate" id="avgRate">0.00 원</div>
-        <div class="sub-info">
-            <span>총 매수: <b id="totalUsd">$0.00</b></span>
-            <span>총 투입: <b id="totalKrw">0원</b></span>
+        <div class="summary-grid">
+            <div class="info-box">
+                <span class="label">총 보유 외화</span>
+                <span class="value" id="totalForeign">$0.00</span>
+            </div>
+            <div class="info-box">
+                <span class="label">총 원화 투입금</span>
+                <span class="value" id="totalKrw">0 원</span>
+            </div>
         </div>
     </div>
 
-    <!-- 신규 입력 폼 -->
+    <!-- 내역 입력 카드 -->
     <div class="card">
-        <h3 style="margin-top:0; margin-bottom: 16px; font-size: 18px;">환전 내역 추가</h3>
+        <h3 style="margin: 0 0 16px 0; font-size: 18px;">환전 내역 추가</h3>
+        
         <div class="form-group">
             <label>환전 날짜</label>
             <input type="date" id="inputDate">
         </div>
+
         <div class="form-group">
             <label>원화 금액 (KRW)</label>
-            <input type="number" id="inputKrw" placeholder="예: 1000000">
+            <div class="input-wrapper">
+                <input type="text" id="inputKrw" placeholder="예: 1,000,000" oninput="formatAndCalc(this)">
+                <span class="unit-label">원</span>
+            </div>
         </div>
+
         <div class="form-group">
-            <label>적용 환율 (원/$)</label>
-            <input type="number" step="0.1" id="inputRate" placeholder="예: 1350.5">
+            <label id="rateLabel">적용 환율 (원/$)</label>
+            <div class="input-wrapper">
+                <input type="text" id="inputRate" placeholder="예: 1,350.50" oninput="formatAndCalc(this, true)">
+                <span class="unit-label" id="rateUnit">원</span>
+            </div>
         </div>
+
+        <!-- 실시간 양방향 계산 예상결과 -->
+        <div class="calc-preview">
+            <span>예상 환전금액</span>
+            <span id="previewAmount">0.00 USD</span>
+        </div>
+
         <div class="form-group">
             <label>메모 (선택)</label>
             <input type="text" id="inputMemo" placeholder="예: 토스증권 환전">
         </div>
+
         <button class="btn" onclick="addRecord()" id="submitBtn">기록하기</button>
     </div>
 
-    <!-- 내역 히스토리 -->
+    <!-- 히스토리 목록 카드 -->
     <div class="card">
-        <h3 style="margin-top:0; margin-bottom: 12px; font-size: 18px;">환전 히스토리</h3>
-        <div id="historyList">데이터 로딩 중...</div>
-    </div>
-</div>
-
-<!-- 수정 모달 창 -->
-<div class="modal" id="editModal">
-    <div class="modal-content">
-        <h3 style="margin-top:0; margin-bottom: 16px;">환전 내역 수정</h3>
-        <input type="hidden" id="editRowIndex">
-        <div class="form-group">
-            <label>환전 날짜</label>
-            <input type="date" id="editDate">
-        </div>
-        <div class="form-group">
-            <label>원화 금액 (KRW)</label>
-            <input type="number" id="editKrw">
-        </div>
-        <div class="form-group">
-            <label>적용 환율 (원/$)</label>
-            <input type="number" step="0.1" id="editRate">
-        </div>
-        <div class="form-group">
-            <label>메모 (선택)</label>
-            <input type="text" id="editMemo">
-        </div>
-        <div class="modal-btns">
-            <button class="btn btn-secondary" onclick="closeEditModal()">취소</button>
-            <button class="btn" onclick="saveEdit()" id="editSaveBtn">저장하기</button>
+        <h3 style="margin: 0 0 12px 0; font-size: 18px;">환전 히스토리</h3>
+        <div id="historyList">
+            <div class="spinner-container"><div class="spinner"></div></div>
         </div>
     </div>
 </div>
 
 <script>
-    // ⚠️ 새 배포 URL로 교체해 주세요
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzLkWMZ-MeAaBBUcVzTfKKBMOqNb4pYB4INetEC1vZMKqtL-eO_FYvaDpC5CQuCR5FGLg/exec";
+    // ⚠️ 앱스 스크립트 웹 앱 URL
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxLzHYUcjhIvLYiM3n5GSrduGJxP6JmMJU38_ShYA5-8asYXSfoCAlehnBQ2YquxKej7Q/exec";
+
+    let currentCurrency = 'USD'; // 기본값: USD
+    let rawData = null;
 
     document.getElementById('inputDate').value = new Date().toISOString().split('T')[0];
 
-    function loadData() {
-        if (!SCRIPT_URL || SCRIPT_URL.includes("여기에_구글")) {
-            document.getElementById('historyList').innerText = 'SCRIPT_URL을 입력해주세요.';
-            return;
+    // 通貨 탭 전환 함수
+    function switchCurrency(curr) {
+        currentCurrency = curr;
+        document.getElementById('tabUSD').classList.toggle('active', curr === 'USD');
+        document.getElementById('tabJPY').classList.toggle('active', curr === 'JPY');
+        
+        // 레이블 및 단위 변경
+        if(curr === 'USD') {
+            document.getElementById('summaryTitle').innerText = '미국 달러 평균환율';
+            document.getElementById('rateLabel').innerText = '적용 환율 (원/$)';
+            document.getElementById('rateUnit').innerText = '원';
+        } else {
+            document.getElementById('summaryTitle').innerText = '일본 엔화 평균환율 (100엔당)';
+            document.getElementById('rateLabel').innerText = '적용 환율 (원/100엔)';
+            document.getElementById('rateUnit').innerText = '원';
         }
+        
+        // 데이터 재렌더링 및 계산기 리셋
+        calculatePreview();
+        renderData();
+    }
+
+    // 쉼표 자동생성 및 실시간 양방향 계산
+    function formatAndCalc(input, isRate = false) {
+        let val = input.value.replace(/[^0-9.]/g, '');
+        
+        // 소수점 2개 이상 입력 방지
+        const parts = val.split('.');
+        if (parts.length > 2) val = parts[0] + '.' + parts.slice(1).join('');
+
+        if (val) {
+            if (isRate) {
+                // 환율 입력 시 소수점 유지
+                input.value = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",") + (parts[1] !== undefined ? '.' + parts[1] : '');
+            } else {
+                // 원화 입력 시 정수 콤마 처리
+                input.value = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            }
+        } else {
+            input.value = '';
+        }
+
+        calculatePreview();
+    }
+
+    // 예상 환전 외화 수량 계산
+    function calculatePreview() {
+        const krwStr = document.getElementById('inputKrw').value.replace(/,/g, '');
+        const rateStr = document.getElementById('inputRate').value.replace(/,/g, '');
+        const krw = parseFloat(krwStr) || 0;
+        const rate = parseFloat(rateStr) || 0;
+
+        const previewEl = document.getElementById('previewAmount');
+
+        if (krw > 0 && rate > 0) {
+            if (currentCurrency === 'USD') {
+                const usd = krw / rate;
+                previewEl.innerText = '$' + usd.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+            } else { // JPY (100엔 기준)
+                const jpy = (krw / rate) * 100;
+                previewEl.innerText = '¥' + jpy.toLocaleString('ja-JP', {maximumFractionDigits: 0});
+            }
+        } else {
+            previewEl.innerText = currentCurrency === 'USD' ? '$0.00' : '¥0';
+        }
+    }
+
+    // 백엔드 데이터 불러오기
+    function loadData() {
+        document.getElementById('historyList').innerHTML = '<div class="spinner-container"><div class="spinner"></div></div>';
 
         fetch(SCRIPT_URL)
         .then(res => res.json())
         .then(data => {
-            document.getElementById('avgRate').innerText = (data.summary.avgRate || 0).toFixed(2) + ' 원';
-            document.getElementById('totalUsd').innerText = '$' + (data.summary.totalUsd || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            document.getElementById('totalKrw').innerText = (data.summary.totalKrw || 0).toLocaleString() + '원';
-
-            const listEl = document.getElementById('historyList');
-            if (!data.history || data.history.length === 0) {
-                listEl.innerHTML = '<div style="color:#8b95a1; text-align:center; padding: 20px 0;">기록된 내역이 없습니다.</div>';
-                return;
-            }
-
-            let html = '';
-            data.history.slice().reverse().forEach(item => {
-                let d = item.date ? item.date.toString().substring(0, 10) : '';
-                let safeMemo = (item.memo || '').replace(/'/g, "\\'");
-                
-                html += `
-                    <div class="history-item">
-                        <div>
-                            <div style="font-weight: bold;">${Number(item.rate).toLocaleString()}원</div>
-                            <div class="date-memo">${d} ${item.memo ? '· ' + item.memo : ''}</div>
-                        </div>
-                        <div class="amounts">
-                            <div class="usd-val">+$${Number(item.usd).toFixed(2)}</div>
-                            <div style="font-size: 12px; color: #8b95a1;">${Number(item.krw).toLocaleString()}원</div>
-                            <div class="action-btns">
-                                <button class="action-btn" onclick="openEditModal(${item.rowIndex}, '${d}', ${item.krw}, ${item.rate}, '${safeMemo}')">수정</button>
-                                <button class="action-btn del" onclick="deleteRecord(${item.rowIndex})">삭제</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            });
-            listEl.innerHTML = html;
+            rawData = data;
+            renderData();
         })
         .catch(err => {
             console.error(err);
-            document.getElementById('historyList').innerText = '데이터 로딩 실패';
+            document.getElementById('historyList').innerText = '데이터를 불러오지 못했습니다.';
         });
     }
 
+    // 화면 UI 렌더링
+    function renderData() {
+        if (!rawData) return;
+
+        // 현재 selected 통화에 맞는 데이터 추출
+        const summary = rawData[currentCurrency]?.summary || { avgRate: 0, totalForeign: 0, totalKrw: 0, liveRate: 0 };
+        const history = rawData[currentCurrency]?.history || [];
+
+        // 1. 요약 카드 적용
+        const symbol = currentCurrency === 'USD' ? '$' : '¥';
+        document.getElementById('avgRate').innerText = summary.avgRate.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' 원';
+        document.getElementById('totalForeign').innerText = symbol + summary.totalForeign.toLocaleString(undefined, {maximumFractionDigits: 2});
+        document.getElementById('totalKrw').innerText = summary.totalKrw.toLocaleString() + ' 원';
+        
+        if (summary.liveRate) {
+            document.getElementById('liveRate').innerText = `실시간: ${summary.liveRate.toLocaleString()}원`;
+        }
+
+        // 2. 히스토리 목록 적용
+        const listEl = document.getElementById('historyList');
+        if (history.length === 0) {
+            listEl.innerHTML = '<div style="color:var(--text-sub); text-align:center; padding: 20px 0;">기록된 환전 내역이 없습니다.</div>';
+            return;
+        }
+
+        let html = '';
+        history.slice().reverse().forEach((item, index) => {
+            const actualIndex = history.length - 1 - index; // 원래 시트에서의 위치 인덱스
+            let d = item.date ? item.date.toString().substring(0, 10) : '';
+            
+            html += `
+                <div class="history-item">
+                    <div class="history-info">
+                        <div class="rate">${Number(item.rate).toLocaleString()} 원</div>
+                        <div class="date-memo">${d} ${item.memo ? '· ' + item.memo : ''}</div>
+                    </div>
+                    <div class="history-right">
+                        <div class="amounts">
+                            <div class="foreign-val">+${symbol}${Number(item.foreign).toLocaleString(undefined, {maximumFractionDigits: 2})}</div>
+                            <div class="krw-val">${Number(item.krw).toLocaleString()} 원</div>
+                        </div>
+                        <button class="btn-delete" onclick="deleteRecord('${currentCurrency}', ${actualIndex})">삭제</button>
+                    </div>
+                </div>
+            `;
+        });
+        listEl.innerHTML = html;
+    }
+
+    // 레코드 추가 요청
     function addRecord() {
         const date = document.getElementById('inputDate').value;
-        const krw = document.getElementById('inputKrw').value;
-        const rate = document.getElementById('inputRate').value;
+        const krw = document.getElementById('inputKrw').value.replace(/,/g, '');
+        const rate = document.getElementById('inputRate').value.replace(/,/g, '');
         const memo = document.getElementById('inputMemo').value;
 
         if (!date || !krw || !rate) {
@@ -294,7 +464,7 @@
             method: 'POST',
             mode: 'no-cors',
             headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({ action: 'add', date, krw, rate, memo })
+            body: JSON.stringify({ action: 'add', currency: currentCurrency, date, krw, rate, memo })
         })
         .then(() => {
             btn.innerText = '기록하기';
@@ -302,83 +472,38 @@
             document.getElementById('inputKrw').value = '';
             document.getElementById('inputRate').value = '';
             document.getElementById('inputMemo').value = '';
-            setTimeout(loadData, 1000);
+            calculatePreview();
+            
+            setTimeout(loadData, 1200);
         })
         .catch(err => {
             console.error(err);
-            alert('저장 실패');
+            alert('저장 실패!');
             btn.innerText = '기록하기';
             btn.disabled = false;
         });
     }
 
-    function openEditModal(rowIndex, date, krw, rate, memo) {
-        document.getElementById('editRowIndex').value = rowIndex;
-        document.getElementById('editDate').value = date;
-        document.getElementById('editKrw').value = krw;
-        document.getElementById('editRate').value = rate;
-        document.getElementById('editMemo').value = memo;
-        document.getElementById('editModal').style.display = 'flex';
-    }
-
-    function closeEditModal() {
-        document.getElementById('editModal').style.display = 'none';
-    }
-
-    function saveEdit() {
-        const rowIndex = document.getElementById('editRowIndex').value;
-        const date = document.getElementById('editDate').value;
-        const krw = document.getElementById('editKrw').value;
-        const rate = document.getElementById('editRate').value;
-        const memo = document.getElementById('editMemo').value;
-
-        if (!date || !krw || !rate) {
-            alert('모든 필드를 입력해 주세요.');
-            return;
-        }
-
-        const btn = document.getElementById('editSaveBtn');
-        btn.innerText = '저장 중...';
-        btn.disabled = true;
+    // 레코드 삭제 요청
+    function deleteRecord(currency, index) {
+        if (!confirm('이 내역을 삭제하시겠습니까?')) return;
 
         fetch(SCRIPT_URL, {
             method: 'POST',
             mode: 'no-cors',
             headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({ action: 'edit', rowIndex, date, krw, rate, memo })
-        })
-        .then(() => {
-            btn.innerText = '저장하기';
-            btn.disabled = false;
-            closeEditModal();
-            setTimeout(loadData, 1000);
-        })
-        .catch(err => {
-            console.error(err);
-            alert('수정 실패');
-            btn.innerText = '저장하기';
-            btn.disabled = false;
-        });
-    }
-
-    function deleteRecord(rowIndex) {
-        if (!confirm('정말 이 환전 내역을 삭제하시겠습니까?')) return;
-
-        fetch(SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({ action: 'delete', rowIndex })
+            body: JSON.stringify({ action: 'delete', currency: currency, index: index })
         })
         .then(() => {
             setTimeout(loadData, 1000);
         })
         .catch(err => {
             console.error(err);
-            alert('삭제 실패');
+            alert('삭제 중 오류가 발생했습니다.');
         });
     }
 
+    // 최초 로딩 실행
     loadData();
 </script>
 
