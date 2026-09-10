@@ -73,6 +73,7 @@
       display: flex;
       align-items: center;
       gap: 12px;
+      flex-wrap: wrap;
     }
 
     .sync-badge {
@@ -140,6 +141,8 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 8px;
     }
 
     .summary-title {
@@ -285,6 +288,7 @@
       outline: none;
       transition: all 0.2s ease;
       box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+      width: 100%;
     }
 
     .usd-theme .input-wrapper input:focus {
@@ -401,10 +405,11 @@
       border-collapse: collapse;
       text-align: right;
       font-size: 0.92rem;
+      white-space: nowrap;
     }
 
     th, td {
-      padding: 13px 16px;
+      padding: 12px 14px;
       border-bottom: 1px solid var(--card-border);
     }
 
@@ -491,6 +496,42 @@
     .toast.show {
       transform: translateY(0);
       opacity: 1;
+    }
+
+    /* 📱 모바일 화면 최적화 미디어쿼리 (시인성 및 간격 조정) */
+    @media (max-width: 768px) {
+      body {
+        padding: 12px;
+      }
+      .brand-title h1 {
+        font-size: 1.35rem;
+      }
+      .summary-card {
+        padding: 16px;
+        margin-bottom: 20px;
+      }
+      .currency-section {
+        padding: 16px;
+      }
+      .stat-value {
+        font-size: 1.35rem;
+      }
+      .form-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      .btn-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      .btn {
+        padding: 12px;
+        font-size: 0.95rem;
+      }
+      th, td {
+        padding: 10px 8px;
+        font-size: 0.85rem;
+      }
     }
   </style>
 </head>
@@ -784,6 +825,7 @@
     isDeleting = true;
     updateStatus('● 시트 데이터 삭제 중...', '#fbbf24');
 
+    // 화면에서 먼저 즉시 반영 (로딩 지연 체감 원천 차단)
     store[currency] = store[currency].filter(item => String(item.id) !== String(id));
     renderUI();
 
@@ -794,12 +836,13 @@
         id: String(id)
       });
 
-      await fetch(WEB_APP_URL, {
+      // 비동기 통신 백그라운드 처리
+      fetch(WEB_APP_URL, {
         method: 'POST',
         mode: 'no-cors',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: payload
-      });
+      }).catch(err => console.error("백그라운드 삭제 통신 에러:", err));
       
       updateStatus('● 삭제 완료', '#10b981');
       showToast('🗑️ 구글 시트 내역 삭제 완료!');
