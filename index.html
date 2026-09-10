@@ -253,6 +253,19 @@
       border-radius: 16px;
       border: 1px solid rgba(255, 255, 255, 0.05);
       margin-bottom: 20px;
+      position: relative;
+    }
+
+    .edit-mode-indicator {
+      display: none;
+      font-size: 0.75rem;
+      color: var(--accent-gold);
+      background: rgba(251, 191, 36, 0.1);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+      padding: 2px 8px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      font-weight: 700;
     }
 
     .form-grid {
@@ -577,6 +590,7 @@
       </div>
 
       <div class="form-container">
+        <div id="usd-edit-indicator" class="edit-mode-indicator">✏️ 기존 내역 수정 모드 진행 중...</div>
         <input type="hidden" id="usd-edit-id" value="">
         <div class="form-grid">
           <div class="input-wrapper">
@@ -641,6 +655,7 @@
       </div>
 
       <div class="form-container">
+        <div id="jpy-edit-indicator" class="edit-mode-indicator">✏️ 기존 내역 수정 모드 진행 중...</div>
         <input type="hidden" id="jpy-edit-id" value="">
         <div class="form-grid">
           <div class="input-wrapper">
@@ -729,7 +744,7 @@
       if (type === 'usd') {
         krwInput.value = Math.round(rate * foreign);
       } else {
-        // JPY는 100엔 기준이므로 올바른 공식 적용: (환율 / 100) * 엔화금액
+        // JPY 정확한 공식: (환율 / 100) * 엔화금액
         krwInput.value = Math.round((rate / 100) * foreign);
       }
     }
@@ -745,14 +760,13 @@
     setTimeout(() => toast.classList.remove('show'), 3000);
   }
 
-  // 🛡️ 날짜 파싱 및 깨짐 방지 로직 대폭 강화 (YYYY-MM-DD 보장)
+  // 🛡️ 완벽한 날짜 포맷팅 및 파싱 방어 함수
   function sanitizeDate(dateStr) {
     if (!dateStr) return '';
     if (typeof dateStr === 'string') {
       if (dateStr.includes('T')) {
         return dateStr.split('T')[0];
       }
-      // "Mon Jun 30 2025..." 형태의 문자열 포맷 방어 처리
       const parsedDate = new Date(dateStr);
       if (!isNaN(parsedDate.getTime())) {
         const year = parsedDate.getFullYear();
@@ -804,7 +818,7 @@
     } catch (err) {
       console.error("데이터 동기화 에러:", err);
       updateStatus('● 구글 시트 연동 에러', '#ef4444');
-      showToast('⚠️ 구글 시트 연동 권한을 확인해주세요');
+      showToast('⚠️ 구글 시트 연동 상태를 확인해주세요');
     }
   }
 
@@ -816,17 +830,19 @@
     const foreign = parseFloat(document.getElementById(`${prefix}-foreign`).value);
     const krw = parseFloat(document.getElementById(`${prefix}-krw`).value);
 
-    if (!date || isNaN(rate) || isNaN(foreign) || foreign <= 0) {
-      alert('거래 일자, 환율, 거래 외화 금액을 정확하게 입력해 주세요!');
+    if (!date || isNaN(rate) || isNaN(foreign) || foreign <= 0 || rate <= 0) {
+      alert('거래 일자, 올바른 환율 및 외화 금액을 정확하게 입력해 주세요!');
       return;
     }
 
-    let recordId = editId ? editId : String(Date.now());
+    // 고유 ID 충돌 방어 보완 (타임스탬프 + 랜덤값)
+    let recordId = editId ? editId : `${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     const targetRecord = { id: recordId, date, type, rate, foreign, krw };
 
     if (editId) {
       store[currency] = store[currency].map(item => String(item.id) === String(editId) ? targetRecord : item);
       document.getElementById(`${prefix}-edit-id`).value = '';
+      document.getElementById(`${prefix}-edit-indicator`).style.display = 'none';
     } else {
       store[currency].unshift(targetRecord);
     }
@@ -870,9 +886,10 @@
     document.getElementById(`${prefix}-rate`).value = record.rate;
     document.getElementById(`${prefix}-foreign`).value = record.foreign;
     document.getElementById(`${prefix}-krw`).value = record.krw;
+    document.getElementById(`${prefix}-edit-indicator`).style.display = 'block';
 
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    showToast(`✏️ ${currency} 내역 수정 모드 활성화 (폼에서 수정 후 버튼을 누르세요)`);
+    showToast(`✏️ ${currency} 내역 수정 모드 활성화`);
   }
 
   async function deleteRecord(currency, id) {
@@ -958,6 +975,7 @@
     renderTable(currency);
   }
 
+  // 🛡️ 이동평균법 정밀 계산 및 마이너스 자산 방어 로직
   function calcSummary() {
     let usdTotalAmt = 0, usdTotalKrw = 0;
     store.USD.slice().reverse().forEach(item => {
