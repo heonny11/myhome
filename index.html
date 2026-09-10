@@ -122,7 +122,7 @@
       background: linear-gradient(145deg, #182234, #0f1523);
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 24px;
-      padding: 30px;
+      padding: 24px;
       margin-bottom: 36px;
       box-shadow: var(--shadow-dark);
       position: relative;
@@ -140,13 +140,13 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
       flex-wrap: wrap;
       gap: 8px;
     }
 
     .summary-title {
-      font-size: 1.4rem;
+      font-size: 1.3rem;
       font-weight: 800;
       color: var(--text-main);
       display: flex;
@@ -154,16 +154,17 @@
       gap: 10px;
     }
 
+    /* 모바일 시인성 개선된 요약 그리드 */
     .summary-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
     }
 
     .stat-box {
       background: rgba(8, 12, 20, 0.75);
       border: 1px solid var(--card-border);
-      padding: 20px 22px;
+      padding: 16px 18px;
       border-radius: 16px;
       box-shadow: inset 0 2px 6px rgba(0,0,0,0.6);
       transition: transform 0.2s ease;
@@ -174,17 +175,17 @@
     }
 
     .stat-label {
-      font-size: 0.88rem;
+      font-size: 0.83rem;
       color: var(--text-muted);
-      margin-bottom: 10px;
+      margin-bottom: 8px;
       font-weight: 600;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
 
     .stat-value {
-      font-size: 1.65rem;
+      font-size: 1.45rem;
       font-weight: 800;
       letter-spacing: -0.5px;
     }
@@ -194,9 +195,9 @@
     .stat-value.gold { color: var(--accent-gold); text-shadow: 0 0 12px rgba(251, 191, 36, 0.35); }
 
     .stat-sub {
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       color: var(--text-sub);
-      margin-top: 6px;
+      margin-top: 4px;
       font-weight: 600;
     }
 
@@ -214,7 +215,7 @@
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 24px;
-      padding: 28px;
+      padding: 24px;
       box-shadow: var(--shadow-dark);
       display: flex;
       flex-direction: column;
@@ -227,13 +228,13 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 24px;
-      padding-bottom: 16px;
+      margin-bottom: 20px;
+      padding-bottom: 14px;
       border-bottom: 1px solid var(--card-border);
     }
 
     .section-title {
-      font-size: 1.4rem;
+      font-size: 1.3rem;
       font-weight: 800;
       display: flex;
       align-items: center;
@@ -241,7 +242,7 @@
     }
 
     .badge-pill {
-      font-size: 0.82rem;
+      font-size: 0.8rem;
       font-weight: 800;
       padding: 4px 10px;
       border-radius: 8px;
@@ -252,27 +253,27 @@
 
     .form-container {
       background: rgba(8, 12, 20, 0.5);
-      padding: 20px;
+      padding: 18px;
       border-radius: 16px;
       border: 1px solid rgba(255, 255, 255, 0.05);
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
 
     .form-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-bottom: 18px;
+      gap: 14px;
+      margin-bottom: 16px;
     }
 
     .input-wrapper {
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 6px;
     }
 
     .input-wrapper label {
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       font-weight: 700;
       color: var(--text-muted);
     }
@@ -281,9 +282,9 @@
       background: #080c14;
       border: 1px solid var(--card-border);
       border-radius: 12px;
-      padding: 13px 16px;
+      padding: 11px 14px;
       color: #fff;
-      font-size: 1.05rem;
+      font-size: 1rem;
       font-weight: 700;
       outline: none;
       transition: all 0.2s ease;
@@ -310,27 +311,27 @@
     .btn-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 16px;
+      gap: 12px;
     }
 
     .btn {
-      padding: 15px;
+      padding: 13px;
       border: none;
       border-radius: 12px;
-      font-size: 1.05rem;
+      font-size: 1rem;
       font-weight: 800;
       cursor: pointer;
       transition: all 0.2s ease;
       display: flex;
       justify-content: center;
       align-items: center;
-      gap: 8px;
-      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
+      gap: 6px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     }
 
     .btn:active {
       transform: translateY(2px);
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
     }
 
     .btn-buy {
@@ -347,15 +348,15 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 14px;
-      gap: 12px;
+      margin-bottom: 12px;
+      gap: 10px;
       flex-wrap: wrap;
     }
 
     .search-box {
       position: relative;
       flex: 1;
-      min-width: 180px;
+      min-width: 160px;
     }
 
     .search-box input {
@@ -363,9 +364,9 @@
       background: #080c14;
       border: 1px solid var(--card-border);
       border-radius: 8px;
-      padding: 8px 12px 8px 32px;
+      padding: 8px 12px 8px 30px;
       color: #fff;
-      font-size: 0.85rem;
+      font-size: 0.83rem;
       outline: none;
     }
 
@@ -375,7 +376,7 @@
       left: 10px;
       top: 50%;
       transform: translateY(-50%);
-      font-size: 0.8rem;
+      font-size: 0.75rem;
       opacity: 0.6;
     }
 
@@ -383,20 +384,20 @@
       background: #080c14;
       border: 1px solid var(--card-border);
       color: var(--text-main);
-      padding: 8px 12px;
+      padding: 8px 10px;
       border-radius: 8px;
-      font-size: 0.85rem;
+      font-size: 0.83rem;
       outline: none;
       cursor: pointer;
     }
 
     .table-container {
-      margin-top: 8px;
+      margin-top: 6px;
       overflow-x: auto;
-      border-radius: 14px;
+      border-radius: 12px;
       border: 1px solid var(--card-border);
       box-shadow: inset 0 2px 6px rgba(0,0,0,0.4);
-      max-height: 480px;
+      max-height: 440px;
       overflow-y: auto;
     }
 
@@ -404,12 +405,12 @@
       width: 100%;
       border-collapse: collapse;
       text-align: right;
-      font-size: 0.92rem;
+      font-size: 0.88rem;
       white-space: nowrap;
     }
 
     th, td {
-      padding: 12px 14px;
+      padding: 10px 12px;
       border-bottom: 1px solid var(--card-border);
     }
 
@@ -425,6 +426,7 @@
 
     th:nth-child(1), td:nth-child(1) { text-align: center; }
     th:nth-child(2), td:nth-child(2) { text-align: center; }
+    th:nth-last-child(1), td:nth-last-child(1) { text-align: center; }
 
     tr { transition: background 0.15s ease; }
     tr:hover { background: rgba(255, 255, 255, 0.04); }
@@ -432,44 +434,57 @@
     .badge-buy {
       background: rgba(239, 68, 68, 0.2);
       color: #fca5a5;
-      padding: 4px 10px;
+      padding: 3px 8px;
       border-radius: 6px;
       font-weight: 800;
-      font-size: 0.82rem;
+      font-size: 0.78rem;
       border: 1px solid rgba(239, 68, 68, 0.4);
     }
 
     .badge-sell {
       background: rgba(59, 130, 246, 0.2);
       color: #93c5fd;
-      padding: 4px 10px;
+      padding: 3px 8px;
       border-radius: 6px;
       font-weight: 800;
-      font-size: 0.82rem;
+      font-size: 0.78rem;
       border: 1px solid rgba(59, 130, 246, 0.4);
     }
+
+    .action-btns {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+    }
+
+    .btn-edit {
+      background: transparent;
+      border: none;
+      color: var(--accent-usd);
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 2px 4px;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+    }
+    .btn-edit:hover { background: rgba(56, 189, 248, 0.2); transform: scale(1.1); }
 
     .btn-del {
       background: transparent;
       border: none;
       color: #ef4444;
       cursor: pointer;
-      font-weight: bold;
-      padding: 4px 8px;
+      font-size: 1rem;
+      padding: 2px 4px;
       border-radius: 4px;
-      font-size: 1.1rem;
       transition: all 0.2s ease;
     }
-
-    .btn-del:hover {
-      background: rgba(239, 68, 68, 0.2);
-      transform: scale(1.1);
-    }
+    .btn-del:hover { background: rgba(239, 68, 68, 0.2); transform: scale(1.1); }
 
     .empty-msg {
       text-align: center !important;
       color: var(--text-sub);
-      padding: 40px !important;
+      padding: 30px !important;
       font-weight: 600;
     }
 
@@ -498,39 +513,39 @@
       opacity: 1;
     }
 
-    /* 📱 모바일 화면 최적화 미디어쿼리 */
+    /* 📱 모바일 최적화 미디어쿼리 */
     @media (max-width: 768px) {
       body {
-        padding: 12px;
+        padding: 10px;
       }
       .brand-title h1 {
-        font-size: 1.35rem;
+        font-size: 1.25rem;
       }
       .summary-card {
-        padding: 16px;
+        padding: 14px;
         margin-bottom: 20px;
       }
       .currency-section {
-        padding: 16px;
+        padding: 14px;
       }
       .stat-value {
-        font-size: 1.35rem;
+        font-size: 1.25rem;
       }
       .form-grid {
         grid-template-columns: 1fr;
-        gap: 12px;
+        gap: 10px;
       }
       .btn-grid {
         grid-template-columns: 1fr;
-        gap: 10px;
+        gap: 8px;
       }
       .btn {
-        padding: 12px;
-        font-size: 0.95rem;
+        padding: 11px;
+        font-size: 0.92rem;
       }
       th, td {
-        padding: 10px 8px;
-        font-size: 0.85rem;
+        padding: 8px 6px;
+        font-size: 0.8rem;
       }
     }
   </style>
@@ -555,7 +570,7 @@
   <div class="summary-card">
     <div class="summary-header">
       <div class="summary-title">📊 전체 통합 자산 요약 현황</div>
-      <span style="font-size: 0.85rem; color: var(--text-sub); font-weight: 600;">* 이동평균법 자동 적용</span>
+      <span style="font-size: 0.8rem; color: var(--text-sub); font-weight: 600;">* 이동평균법 자동 적용</span>
     </div>
     <div class="summary-grid">
       <div class="stat-box">
@@ -590,6 +605,7 @@
       </div>
 
       <div class="form-container">
+        <input type="hidden" id="usd-edit-id" value="">
         <div class="form-grid">
           <div class="input-wrapper">
             <label>📅 거래 일자</label>
@@ -610,8 +626,8 @@
         </div>
 
         <div class="btn-grid">
-          <button class="btn btn-buy" onclick="addRecord('USD', '매수')">🔴 USD 매수 기록</button>
-          <button class="btn btn-sell" onclick="addRecord('USD', '매도')">🔵 USD 매도 기록</button>
+          <button class="btn btn-buy" onclick="saveRecord('USD', '매수')">🔴 USD 매수 기록</button>
+          <button class="btn btn-sell" onclick="saveRecord('USD', '매도')">🔵 USD 매도 기록</button>
         </div>
       </div>
 
@@ -637,7 +653,7 @@
               <th>환율(₩)</th>
               <th>외화($)</th>
               <th>원화(₩)</th>
-              <th>삭제</th>
+              <th>관리</th>
             </tr>
           </thead>
           <tbody id="usd-table-body"></tbody>
@@ -653,6 +669,7 @@
       </div>
 
       <div class="form-container">
+        <input type="hidden" id="jpy-edit-id" value="">
         <div class="form-grid">
           <div class="input-wrapper">
             <label>📅 거래 일자</label>
@@ -673,8 +690,8 @@
         </div>
 
         <div class="btn-grid">
-          <button class="btn btn-buy" onclick="addRecord('JPY', '매수')">🔴 JPY 매수 기록</button>
-          <button class="btn btn-sell" onclick="addRecord('JPY', '매도')">🔵 JPY 매도 기록</button>
+          <button class="btn btn-buy" onclick="saveRecord('JPY', '매수')">🔴 JPY 매수 기록</button>
+          <button class="btn btn-sell" onclick="saveRecord('JPY', '매도')">🔵 JPY 매도 기록</button>
         </div>
       </div>
 
@@ -700,7 +717,7 @@
               <th>환율(100엔)</th>
               <th>외화(¥)</th>
               <th>원화(₩)</th>
-              <th>삭제</th>
+              <th>관리</th>
             </tr>
           </thead>
           <tbody id="jpy-table-body"></tbody>
@@ -751,7 +768,6 @@
     setTimeout(() => toast.classList.remove('show'), 3000);
   }
 
-  // 🛠️ 날짜 왜곡/밀림 버그 픽스 정제 함수 (YYYY-MM-DD 포맷 안전 추출)
   function sanitizeDate(dateStr) {
     if (!dateStr) return '';
     if (typeof dateStr === 'string' && dateStr.includes('T')) {
@@ -775,11 +791,10 @@
       const data = await res.json();
       
       if (data && data.status === 'success') {
-        // 날짜 데이터 무결성 정제 작업 적용
         store.USD = (data.USD ? data.USD.history || [] : []).map(item => ({
           ...item,
           date: sanitizeDate(item.date)
-        })).filter(item => Number(item.foreign) > 0 || Number(item.krw) > 0); // 불필요한 0 데이터 필터링 제거
+        })).filter(item => Number(item.foreign) > 0 || Number(item.krw) > 0);
 
         store.JPY = (data.JPY ? data.JPY.history || [] : []).map(item => ({
           ...item,
@@ -794,12 +809,14 @@
     } catch (err) {
       console.error("데이터 동기화 에러:", err);
       updateStatus('● 구글 시트 연동 에러', '#ef4444');
-      showToast('⚠️ 구글 시트 연동 권한을 확인해주세요 (Anyone으로 배포)');
+      showToast('⚠️ 구글 시트 연동 권한을 확인해주세요');
     }
   }
 
-  async function addRecord(currency, type) {
+  // 🛠️ 추가 및 수정 통합 처리 함수 (수정 모드 지원)
+  async function saveRecord(currency, type) {
     const prefix = currency.toLowerCase();
+    const editId = document.getElementById(`${prefix}-edit-id`).value;
     const date = document.getElementById(`${prefix}-date`).value;
     const rate = parseFloat(document.getElementById(`${prefix}-rate`).value);
     const foreign = parseFloat(document.getElementById(`${prefix}-foreign`).value);
@@ -810,11 +827,21 @@
       return;
     }
 
-    const newRecord = { id: String(Date.now()), date, type, rate, foreign, krw };
+    let recordId = editId ? editId : String(Date.now());
+    const targetRecord = { id: recordId, date, type, rate, foreign, krw };
 
-    store[currency].unshift(newRecord);
+    if (editId) {
+      // 수정 모드: 기존 아이템 대체
+      store[currency] = store[currency].map(item => String(item.id) === String(editId) ? targetRecord : item);
+      document.getElementById(`${prefix}-edit-id`).value = '';
+    } else {
+      // 신규 등록 모드
+      store[currency].unshift(targetRecord);
+    }
+
     renderUI();
 
+    // 입력폼 초기화
     document.getElementById(`${prefix}-foreign`).value = '';
     document.getElementById(`${prefix}-krw`).value = '';
 
@@ -822,9 +849,9 @@
 
     try {
       const payload = new URLSearchParams({
-        action: 'add',
+        action: 'add', // 서버 액션은 동일 (구글 시트 저장 및 동기화)
         currency: currency,
-        tradeData: JSON.stringify(newRecord)
+        tradeData: JSON.stringify(targetRecord)
       });
 
       await fetch(WEB_APP_URL, {
@@ -835,11 +862,27 @@
       });
 
       updateStatus('● 동기화 완료', '#10b981');
-      showToast(`✅ ${currency} ${type} 내역 저장 완료`);
+      showToast(`✅ ${currency} ${type} 내역 ${editId ? '수정' : '저장'} 완료`);
     } catch (e) {
       console.error("저장 실패:", e);
       updateStatus('● 저장 실패', '#ef4444');
     }
+  }
+
+  // 🛠️ 특정 기록을 입력창으로 불러와 수정 상태로 전환
+  function editRecord(currency, id) {
+    const prefix = currency.toLowerCase();
+    const record = store[currency].find(item => String(item.id) === String(id));
+    if (!record) return;
+
+    document.getElementById(`${prefix}-edit-id`).value = record.id;
+    document.getElementById(`${prefix}-date`).value = record.date;
+    document.getElementById(`${prefix}-rate`).value = record.rate;
+    document.getElementById(`${prefix}-foreign`).value = record.foreign;
+    document.getElementById(`${prefix}-krw`).value = record.krw;
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    showToast(`✏️ ${currency} 내역 수정 모드 활성화 (폼에서 수정 후 버튼을 누르세요)`);
   }
 
   async function deleteRecord(currency, id) {
@@ -910,7 +953,12 @@
         <td>${Number(item.rate).toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 2})}</td>
         <td>${Number(item.foreign).toLocaleString(undefined, {maximumFractionDigits: 2})}</td>
         <td>${Number(item.krw).toLocaleString()}</td>
-        <td><button class="btn-del" onclick="deleteRecord('${currency}', '${item.id}')">✕</button></td>
+        <td>
+          <div class="action-btns">
+            <button class="btn-edit" onclick="editRecord('${currency}', '${item.id}')" title="수정">✏️</button>
+            <button class="btn-del" onclick="deleteRecord('${currency}', '${item.id}')" title="삭제">✕</button>
+          </div>
+        </td>
       `;
       tbody.appendChild(tr);
     });
