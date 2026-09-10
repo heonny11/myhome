@@ -498,7 +498,7 @@
       opacity: 1;
     }
 
-    /* 📱 모바일 화면 최적화 미디어쿼리 (시인성 및 간격 조정) */
+    /* 📱 모바일 화면 최적화 미디어쿼리 */
     @media (max-width: 768px) {
       body {
         padding: 12px;
@@ -713,7 +713,6 @@
 <div class="toast" id="toast">🔔 처리되었습니다.</div>
 
 <script>
-  // 🎯 최신 새로 배포된 고정 웹앱 URL
   const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbxrV91wYsb1Nmk6H0tMxIima1KZn1OKm3kYqX_iXPkgywgjAryFwR9tUb7q1XuXJfG5VA/exec';
   
   let store = { USD: [], JPY: [] };
@@ -752,6 +751,22 @@
     setTimeout(() => toast.classList.remove('show'), 3000);
   }
 
+  // 🛠️ 날짜 왜곡/밀림 버그 픽스 정제 함수 (YYYY-MM-DD 포맷 안전 추출)
+  function sanitizeDate(dateStr) {
+    if (!dateStr) return '';
+    if (typeof dateStr === 'string' && dateStr.includes('T')) {
+      return dateStr.split('T')[0];
+    }
+    const d = new Date(dateStr);
+    if (!isNaN(d.getTime())) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+    return String(dateStr).substring(0, 10);
+  }
+
   async function fetchData() {
     updateStatus('● 동기화 중...', '#fbbf24');
 
@@ -760,8 +775,17 @@
       const data = await res.json();
       
       if (data && data.status === 'success') {
-        store.USD = data.USD ? data.USD.history || [] : [];
-        store.JPY = data.JPY ? data.JPY.history || [] : [];
+        // 날짜 데이터 무결성 정제 작업 적용
+        store.USD = (data.USD ? data.USD.history || [] : []).map(item => ({
+          ...item,
+          date: sanitizeDate(item.date)
+        })).filter(item => Number(item.foreign) > 0 || Number(item.krw) > 0); // 불필요한 0 데이터 필터링 제거
+
+        store.JPY = (data.JPY ? data.JPY.history || [] : []).map(item => ({
+          ...item,
+          date: sanitizeDate(item.date)
+        })).filter(item => Number(item.foreign) > 0 || Number(item.krw) > 0);
+
         renderUI();
         updateStatus('● 동기화 완료', '#10b981');
       } else {
@@ -825,7 +849,6 @@
     isDeleting = true;
     updateStatus('● 시트 데이터 삭제 중...', '#fbbf24');
 
-    // 화면에서 먼저 즉시 반영 (로딩 지연 체감 원천 차단)
     store[currency] = store[currency].filter(item => String(item.id) !== String(id));
     renderUI();
 
@@ -836,7 +859,6 @@
         id: String(id)
       });
 
-      // 비동기 통신 백그라운드 처리
       fetch(WEB_APP_URL, {
         method: 'POST',
         mode: 'no-cors',
