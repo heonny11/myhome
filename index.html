@@ -21,9 +21,6 @@
       --accent-gold: #fbbf24;
       --accent-green: #10b981;
       
-      --buy-color: #ef4444;
-      --sell-color: #3b82f6;
-      
       --shadow-dark: 0 15px 35px -5px rgba(0, 0, 0, 0.75), 0 5px 15px -3px rgba(0, 0, 0, 0.5);
       --glow-usd: 0 0 30px rgba(56, 189, 248, 0.15);
       --glow-jpy: 0 0 30px rgba(251, 113, 133, 0.15);
@@ -154,7 +151,6 @@
       gap: 10px;
     }
 
-    /* 모바일 시인성 개선된 요약 그리드 */
     .summary-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -513,40 +509,16 @@
       opacity: 1;
     }
 
-    /* 📱 모바일 최적화 미디어쿼리 */
     @media (max-width: 768px) {
-      body {
-        padding: 10px;
-      }
-      .brand-title h1 {
-        font-size: 1.25rem;
-      }
-      .summary-card {
-        padding: 14px;
-        margin-bottom: 20px;
-      }
-      .currency-section {
-        padding: 14px;
-      }
-      .stat-value {
-        font-size: 1.25rem;
-      }
-      .form-grid {
-        grid-template-columns: 1fr;
-        gap: 10px;
-      }
-      .btn-grid {
-        grid-template-columns: 1fr;
-        gap: 8px;
-      }
-      .btn {
-        padding: 11px;
-        font-size: 0.92rem;
-      }
-      th, td {
-        padding: 8px 6px;
-        font-size: 0.8rem;
-      }
+      body { padding: 10px; }
+      .brand-title h1 { font-size: 1.25rem; }
+      .summary-card { padding: 14px; margin-bottom: 20px; }
+      .currency-section { padding: 14px; }
+      .stat-value { font-size: 1.25rem; }
+      .form-grid { grid-template-columns: 1fr; gap: 10px; }
+      .btn-grid { grid-template-columns: 1fr; gap: 8px; }
+      .btn { padding: 11px; font-size: 0.92rem; }
+      th, td { padding: 8px 6px; font-size: 0.8rem; }
     }
   </style>
 </head>
@@ -754,7 +726,12 @@
     function calc() {
       const rate = parseFloat(rateInput.value) || 0;
       const foreign = parseFloat(foreignInput.value) || 0;
-      krwInput.value = type === 'usd' ? Math.round(rate * foreign) : Math.round((rate / 100) * foreign);
+      if (type === 'usd') {
+        krwInput.value = Math.round(rate * foreign);
+      } else {
+        // JPY는 100엔 기준이므로 올바른 공식 적용: (환율 / 100) * 엔화금액
+        krwInput.value = Math.round((rate / 100) * foreign);
+      }
     }
 
     rateInput.addEventListener('input', calc);
@@ -768,10 +745,22 @@
     setTimeout(() => toast.classList.remove('show'), 3000);
   }
 
+  // 🛡️ 날짜 파싱 및 깨짐 방지 로직 대폭 강화 (YYYY-MM-DD 보장)
   function sanitizeDate(dateStr) {
     if (!dateStr) return '';
-    if (typeof dateStr === 'string' && dateStr.includes('T')) {
-      return dateStr.split('T')[0];
+    if (typeof dateStr === 'string') {
+      if (dateStr.includes('T')) {
+        return dateStr.split('T')[0];
+      }
+      // "Mon Jun 30 2025..." 형태의 문자열 포맷 방어 처리
+      const parsedDate = new Date(dateStr);
+      if (!isNaN(parsedDate.getTime())) {
+        const year = parsedDate.getFullYear();
+        const month = String(parsedDate.getMonth() + 1).padStart(2, '0');
+        const day = String(parsedDate.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+      return dateStr.substring(0, 10);
     }
     const d = new Date(dateStr);
     if (!isNaN(d.getTime())) {
@@ -780,7 +769,7 @@
       const day = String(d.getDate()).padStart(2, '0');
       return `${year}-${month}-${day}`;
     }
-    return String(dateStr).substring(0, 10);
+    return '';
   }
 
   async function fetchData() {
@@ -793,13 +782,19 @@
       if (data && data.status === 'success') {
         store.USD = (data.USD ? data.USD.history || [] : []).map(item => ({
           ...item,
-          date: sanitizeDate(item.date)
-        })).filter(item => Number(item.foreign) > 0 || Number(item.krw) > 0);
+          date: sanitizeDate(item.date),
+          rate: Number(item.rate) || 0,
+          foreign: Number(item.foreign) || 0,
+          krw: Number(item.krw) || 0
+        })).filter(item => item.foreign > 0 || item.krw > 0);
 
         store.JPY = (data.JPY ? data.JPY.history || [] : []).map(item => ({
           ...item,
-          date: sanitizeDate(item.date)
-        })).filter(item => Number(item.foreign) > 0 || Number(item.krw) > 0);
+          date: sanitizeDate(item.date),
+          rate: Number(item.rate) || 0,
+          foreign: Number(item.foreign) || 0,
+          krw: Number(item.krw) || 0
+        })).filter(item => item.foreign > 0 || item.krw > 0);
 
         renderUI();
         updateStatus('● 동기화 완료', '#10b981');
@@ -813,7 +808,6 @@
     }
   }
 
-  // 🛠️ 추가 및 수정 통합 처리 함수 (수정 모드 지원)
   async function saveRecord(currency, type) {
     const prefix = currency.toLowerCase();
     const editId = document.getElementById(`${prefix}-edit-id`).value;
@@ -831,17 +825,14 @@
     const targetRecord = { id: recordId, date, type, rate, foreign, krw };
 
     if (editId) {
-      // 수정 모드: 기존 아이템 대체
       store[currency] = store[currency].map(item => String(item.id) === String(editId) ? targetRecord : item);
       document.getElementById(`${prefix}-edit-id`).value = '';
     } else {
-      // 신규 등록 모드
       store[currency].unshift(targetRecord);
     }
 
     renderUI();
 
-    // 입력폼 초기화
     document.getElementById(`${prefix}-foreign`).value = '';
     document.getElementById(`${prefix}-krw`).value = '';
 
@@ -849,7 +840,7 @@
 
     try {
       const payload = new URLSearchParams({
-        action: 'add', // 서버 액션은 동일 (구글 시트 저장 및 동기화)
+        action: 'add',
         currency: currency,
         tradeData: JSON.stringify(targetRecord)
       });
@@ -869,7 +860,6 @@
     }
   }
 
-  // 🛠️ 특정 기록을 입력창으로 불러와 수정 상태로 전환
   function editRecord(currency, id) {
     const prefix = currency.toLowerCase();
     const record = store[currency].find(item => String(item.id) === String(id));
