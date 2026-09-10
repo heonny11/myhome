@@ -744,7 +744,6 @@
       if (type === 'usd') {
         krwInput.value = Math.round(rate * foreign);
       } else {
-        // JPY 정확한 공식: (환율 / 100) * 엔화금액
         krwInput.value = Math.round((rate / 100) * foreign);
       }
     }
@@ -760,13 +759,14 @@
     setTimeout(() => toast.classList.remove('show'), 3000);
   }
 
-  // 🛡️ 완벽한 날짜 포맷팅 및 파싱 방어 함수
+  // 🛡️ [버그 픽스] 시트에서 넘어오는 긴 날짜 문자열/객체를 완벽하게 YYYY-MM-DD로 변환
   function sanitizeDate(dateStr) {
     if (!dateStr) return '';
     if (typeof dateStr === 'string') {
       if (dateStr.includes('T')) {
         return dateStr.split('T')[0];
       }
+      // 'Wed Sep 02 2026 ...' 형태 또는 일반 날짜 문자열 파싱 방어
       const parsedDate = new Date(dateStr);
       if (!isNaN(parsedDate.getTime())) {
         const year = parsedDate.getFullYear();
@@ -794,13 +794,14 @@
       const data = await res.json();
       
       if (data && data.status === 'success') {
+        // 🛡️ [버그 픽스] 시트 데이터 파싱 시 숫자가 누락되거나 왜곡되는 현상을 막기 위해 데이터 정제 및 강제 타입 캐스팅 보완
         store.USD = (data.USD ? data.USD.history || [] : []).map(item => ({
           ...item,
           date: sanitizeDate(item.date),
           rate: Number(item.rate) || 0,
           foreign: Number(item.foreign) || 0,
           krw: Number(item.krw) || 0
-        })).filter(item => item.foreign > 0 || item.krw > 0);
+        })).filter(item => (item.foreign > 0 || item.krw > 0) && !isNaN(item.rate));
 
         store.JPY = (data.JPY ? data.JPY.history || [] : []).map(item => ({
           ...item,
@@ -808,7 +809,7 @@
           rate: Number(item.rate) || 0,
           foreign: Number(item.foreign) || 0,
           krw: Number(item.krw) || 0
-        })).filter(item => item.foreign > 0 || item.krw > 0);
+        })).filter(item => (item.foreign > 0 || item.krw > 0) && !isNaN(item.rate));
 
         renderUI();
         updateStatus('● 동기화 완료', '#10b981');
@@ -835,9 +836,8 @@
       return;
     }
 
-    // 고유 ID 충돌 방어 보완 (타임스탬프 + 랜덤값)
     let recordId = editId ? editId : `${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-    const targetRecord = { id: recordId, date, type, rate, foreign, krw };
+    const targetRecord = { id: String(recordId), date, type, rate, foreign, krw };
 
     if (editId) {
       store[currency] = store[currency].map(item => String(item.id) === String(editId) ? targetRecord : item);
@@ -956,7 +956,7 @@
       const isBuy = item.type === '매수';
       tr.innerHTML = `
         <td><span class="${isBuy ? 'badge-buy' : 'badge-sell'}">${item.type}</span></td>
-        <td>${item.date}</td>
+        <td>${sanitizeDate(item.date)}</td>
         <td>${Number(item.rate).toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 2})}</td>
         <td>${Number(item.foreign).toLocaleString(undefined, {maximumFractionDigits: 2})}</td>
         <td>${Number(item.krw).toLocaleString()}</td>
@@ -975,32 +975,36 @@
     renderTable(currency);
   }
 
-  // 🛡️ 이동평균법 정밀 계산 및 마이너스 자산 방어 로직
+  // 🛡️ [버그 픽스] 이동평균법 정밀 계산 시 빈값/잘못된 숫자로 인해 평단가가 폭등하는 버그 원천 차단
   function calcSummary() {
     let usdTotalAmt = 0, usdTotalKrw = 0;
     store.USD.slice().reverse().forEach(item => {
+      const foreign = Number(item.foreign) || 0;
+      const krw = Number(item.krw) || 0;
       if (item.type === '매수') {
-        usdTotalAmt += Number(item.foreign);
-        usdTotalKrw += Number(item.krw);
+        usdTotalAmt += foreign;
+        usdTotalKrw += krw;
       } else if (item.type === '매도') {
         if (usdTotalAmt > 0) {
           const avgRate = usdTotalKrw / usdTotalAmt;
-          usdTotalAmt = Math.max(0, usdTotalAmt - Number(item.foreign));
-          usdTotalKrw = Math.max(0, usdTotalKrw - (Number(item.foreign) * avgRate));
+          usdTotalAmt = Math.max(0, usdTotalAmt - foreign);
+          usdTotalKrw = Math.max(0, usdTotalKrw - (foreign * avgRate));
         }
       }
     });
 
     let jpyTotalAmt = 0, jpyTotalKrw = 0;
     store.JPY.slice().reverse().forEach(item => {
+      const foreign = Number(item.foreign) || 0;
+      const krw = Number(item.krw) || 0;
       if (item.type === '매수') {
-        jpyTotalAmt += Number(item.foreign);
-        jpyTotalKrw += Number(item.krw);
+        jpyTotalAmt += foreign;
+        jpyTotalKrw += krw;
       } else if (item.type === '매도') {
         if (jpyTotalAmt > 0) {
           const avgRate = jpyTotalKrw / jpyTotalAmt;
-          jpyTotalAmt = Math.max(0, jpyTotalAmt - Number(item.foreign));
-          jpyTotalKrw = Math.max(0, jpyTotalKrw - (Number(item.foreign) * avgRate));
+          jpyTotalAmt = Math.max(0, jpyTotalAmt - foreign);
+          jpyTotalKrw = Math.max(0, jpyTotalKrw - (foreign * avgRate));
         }
       }
     });
